@@ -1,0 +1,202 @@
+<?xml version="1.0"?>
+<!--
+             This project is using the Portico Build System
+ 
+      The Portico Build System is designed to support projects that
+      must build multiple artefacts or distributions from a single,
+      shared codebase. It is designed to be extended and allows all
+      logic for a particular artefact or distribution to be located
+      together to help make navigation of a large structure as easy
+      as possible. For full details, see the online documentation:
+
+             https://github.com/timpokorny/build-skeleton
+
+         File: profiles/java.xml
+      Purpose: The common java profile defining compile, test, jar
+               and sandbox tasks. As Java is cross platform, it is
+               possible to combine most of this work under a single
+               file. However, split it out into several smaller
+               distribution-specific files if you must.
+-->
+<project name="java">
+
+	<!-- ================================================================================= -->
+	<!--                                 General Settings                                  -->
+	<!-- ================================================================================= -->
+	<description>
+		Java build profile for main source modules
+	</description>
+
+	<!-- ==== Basic Properties ==== -->
+	<property name="java.src.dir"             location="${src.dir}/java"/>
+	<property name="java.build.dir"           location="${build.dir}/java"/>
+	<property name="resources.jars.dir"       location="${resources.dir}/jars"/>
+
+	<!-- ==== Source Related Properties ==== -->
+	<property name="wantest.src.dir"          location="${java.src.dir}/wantest"/>
+	<property name="wantest.build.dir"        location="${java.build.dir}/wantest"/>
+	<property name="wantest.classes.dir"      location="${wantest.build.dir}/classes"/>
+
+	<!-- ==== Javadoc Related Properties ==== -->
+	<property name="javadoc.oracle"           value="http://docs.oracle.com/javase/7/docs/api/"/>
+	<property name="javadoc.copyright"        value="Copyright Open LVC Groups ${YEAR}."/>
+	<property name="javadoc.window"           value="${build.shortname} [${build.version} build] Javadoc"/>
+	<!-- defaults used by the macro -->
+	<property name="javadoc.windowtitle"      value="WAN Test [${build.version} build]"/>
+	<property name="javadoc.header"           value="${javadoc.windowtitle}"/>
+	<property name="javadoc.footer"           value="${javadoc.windowtitle}"/>
+
+	<!-- =========================================================== -->
+	<!--                     Project Libraries                       -->
+	<!-- =========================================================== -->
+	<!-- ==== Library Path Definitions ==== -->
+	<!-- These properties are set so that any information relating to a specific path
+	     for a library can be changed in a single spot. The properties should be used
+	     when defining paths and the like later in the build file -->
+	<property name="testng.dir"            location="${lib.dir}/testng/testng-6.8"/>
+	<property name="log4j.dir"             location="${lib.dir}/log4j/apache-log4j-2.0-beta9"/>
+	<property name="portico.dir"           location="${lib.dir}/portico/2.0.1"/>
+
+	<!-- Classpaths for individual libraries -->
+	<path id="lib.testng.classpath">
+		<fileset dir="${testng.dir}" includes="**/*.jar"/>
+	</path>
+	
+	<path id="lib.log4j.classpath">
+		<fileset dir="${log4j.dir}" includes="**/*"/>
+	</path>
+
+	<path id="lib.portico.classpath">
+		<fileset dir="${portico.dir}" includes="**/*"/>
+	</path>
+
+	<!-- ========================== -->
+	<!-- Classpath Set Declarations -->
+	<!-- ========================== -->
+	<path id="compile.classpath">
+		<path refid="lib.log4j.classpath"/>
+		<path refid="lib.portico.classpath"/>
+	</path>
+	
+	<path id="test.classpath">
+		<path refid="compile.classpath"/>
+		<path refid="lib.testng.classpath"/>
+		<pathelement path="${wantest.classes.dir}"/>
+		<pathelement path="${test.classes.dir}"/>
+		<pathelement path="${resources.dir}/jars/MYPROJECT.jar"/>
+		<pathelement path="${resources.dir}/testdata"/>
+	</path>
+	
+	<!-- ================================================================================= -->
+	<!--                                   Clean Targets                                   -->
+	<!-- ================================================================================= -->
+	<target name="clean" extensionOf="master.clean">
+		<delete dir="${java.build.dir}"/>
+		<delete dir="logs"/>
+	</target>
+
+	<!-- ================================================================================= -->
+	<!--                                  Compile Targets                                  -->
+	<!-- ================================================================================= -->
+	<!-- 
+	     Local compilation extension point for all Java targets. Each Java compilation target
+	     should declare itself an extension of this point to link into the main build.
+	-->
+	<extension-point name="compile"
+	                 extensionOf="master.compile"
+	                 description="Compile the main projection and test modules"/>
+
+	<!-- compile the main production code -->	
+	<target name="compile.wantest" extensionOf="compile">
+		<java-compile srcdir="${wantest.src.dir}"
+		              outdir="${wantest.classes.dir}"
+		              classpath="compile.classpath"/>
+	</target>
+
+	<!-- ================================================================================= -->
+	<!--                                  Sandbox Targets                                  -->
+	<!-- ================================================================================= -->
+	<!-- 
+	     The main sandbox preparation target. This will aggregate together all the various
+	     required artefacts scattered around the build environment into the structure that
+	     should be present when installed on a users system (relative to the sandbox dir).
+	-->
+	<target name="sandbox" extensionOf="master.sandbox" depends="compile,jars">
+		<!-- create the required directories -->
+		<mkdir dir="${dist.dir}"/>
+		<mkdir dir="${sandbox.dir}"/>
+
+		<!-- copy across the dependant libraries -->
+		<mkdir dir="${sandbox.lib.dir}"/>
+		<copy todir="${sandbox.lib.dir}">
+			<fileset dir="${lib.dir}" includes="**/portico*/**/*"/>
+		</copy>
+
+		<!-- copy across the resources -->
+		<copy todir="${sandbox.dir}">
+			<fileset dir="${resources.dist.dir}/common" includes="**/*"/>
+		</copy>
+
+		<!-- chmod anything in a bin directory -->
+		<chmod dir="${sandbox.dir}" perm="777" includes="bin/**/*"/>
+
+		<!-- More stuff specific to MYPROJECT -->
+		
+		<!-- Run platform specific fixes such as fixing crlf for Windows bound files! -->
+		
+	</target>
+
+	<!-- ==================================== -->
+	<!--           Jar File Targets           -->
+	<!-- ==================================== -->
+	<!--
+	     Add an extension point that all jar file generation targets can tack on to. If there
+	     is only a single jar file, this is somewhat redundant, but leaving for common structure
+	     across builds for other projects as well.
+	-->
+	<extension-point name="jars"/>
+
+	<!-- EXAMPLE: Remember to adjust for MYPROJECT or remove entirely -->
+	<!-- build the main jar file -->
+	<target name="jar.wantest" extensionOf="jars" depends="compile">
+		<!-- construct the main wantest jar file -->
+		<jar destfile="${sandbox.dir}/lib/wantest.jar">
+			<!-- wantest code -->
+			<fileset dir="${wantest.classes.dir}" includes="**/*.class"/>
+			
+			<!-- internal jar resources -->
+			<fileset dir="${resources.jars.dir}/wantest.jar" includes="**/*"/>
+
+			<!-- license -->
+			<fileset dir="${basedir}" includes="LICENSE.wantest"/>
+
+			<!-- build.properties file for version information -->
+			<fileset dir="${basedir}" includes="build.properties"/>
+
+			<!-- MANIFEST -->
+			<manifest>
+				<attribute name="Main-Class" value="wantest.Main"/>
+				<attribute name="Built-By" value="Calytrix Technologies"/>
+				<section name="wantest">
+					<attribute name="Implementation-Title" value="wantest"/>
+					<attribute name="Implementation-Version" value="${build.version} (build ${build.number}) ${TODAY}"/>
+					<attribute name="Implementation-Vendor" value="Calytrix Technologies"/>
+				</section>
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- ================================================================================= -->
+	<!--                             Release Generation Targets                            -->
+	<!-- ================================================================================= -->
+	<!-- 
+	     The parent release target. This will run a clean and then compile all code, run all
+	     tests, generate a sandbox and place all additional release artefacts (such as javadoc)
+	     in with it in preparation for release.
+	-->
+	<target name="release"
+	        extensionOf="master.release"
+	        depends="clean,test,sandbox"/>
+
+</project>
+

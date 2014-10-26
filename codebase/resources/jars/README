@@ -1,0 +1,22 @@
+Distributable Resources for Jar Files
+--------------------------------------
+It is common to include more than just compiled source code
+in jar files. The convention of the build is to include all
+resources under the directory corresponding to the jar file
+name in the actual jar itself.
+
+For example, given a sub-directory "myjar.jar" with the
+following structure:
+
+  myjar.jar/
+     etc/
+	   -- versions.txt
+	 META-INF/
+	   services/
+	     -- some.class.name
+     -- log4j.properties
+
+During the build we'd expect the log4j.properties file, and
+the etc and META-INF directories to be copied into the jar
+file "myjar.jar" as it is produced.
+
