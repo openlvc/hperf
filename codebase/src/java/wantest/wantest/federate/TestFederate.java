@@ -20,9 +20,13 @@
  */
 package wantest.federate;
 
-import hla.rti1516e.NullFederateAmbassador;
+import hla.rti1516e.ObjectInstanceHandle;
 
-public class WanTestFederateAmbassador extends NullFederateAmbassador
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+public class TestFederate
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,23 +35,61 @@ public class WanTestFederateAmbassador extends NullFederateAmbassador
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
-	private WanTestFederate federate;
+	private String federateName;
+	private Map<String,TestObject> objects;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public WanTestFederateAmbassador( WanTestFederate federate )
+	public TestFederate( String federateName )
 	{
-		this.federate = federate;
+		this.federateName = federateName;
+		this.objects = new HashMap<String,TestObject>();
 	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 
+	public void addObject( TestObject object )
+	{
+		this.objects.put( object.getName(), object );
+	}
+	
+	public boolean containsObject( ObjectInstanceHandle handle )
+	{
+		for( TestObject testObject : objects.values() )
+		{
+			if( testObject.getHandle().equals(handle) )
+				return true;
+		}
+		
+		return false;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
+	
+	public String getFederateName()
+	{
+		return this.federateName;
+	}
+
+	public Collection<TestObject> getObjects()
+	{
+		return this.objects.values();
+	}
+	
+	public int getObjectCount()
+	{
+		return this.objects.size();
+	}
+
+	public String toString()
+	{
+		return this.federateName;
+	}
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS

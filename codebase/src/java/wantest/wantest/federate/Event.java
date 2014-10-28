@@ -18,34 +18,59 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest;
+package wantest.federate;
 
-import wantest.federate.Federate;
+import hla.rti1516e.ObjectInstanceHandle;
 
-public class Main
+/**
+ * This class is included in {@link TestObject}s as a way to track when remote reflections
+ * are received, and to count the number of discrete events received for an object. The
+ * timing information is used at the end of the simulation run to generate summary results
+ * on the distribution of events .....
+ * 
+ *
+ */
+public class Event
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
 	//----------------------------------------------------------
-
+	public enum Type{ Discovery, Reflection };
+	
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
+	public Type type;
+	public ObjectInstanceHandle objectHandle;
+	public long sentTimestamp;
+	public long receivedTimestamp;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
+	public Event( Type type, ObjectInstanceHandle objectHandle )
+	{
+		this.type = type;
+		this.objectHandle = objectHandle;
+		this.sentTimestamp = 0;
+		this.receivedTimestamp = 0;
+	}
+	
+	public Event( Type type,
+	              ObjectInstanceHandle objectHandle,
+	              long sentTimestamp,
+	              long receivedTimestamp )
+	{
+		this( type, objectHandle );
+		this.sentTimestamp = sentTimestamp;
+		this.receivedTimestamp = receivedTimestamp;
+	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 	
-
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate().runFederate( args );
-	}
 }

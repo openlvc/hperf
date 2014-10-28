@@ -18,15 +18,22 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest;
+package wantest.federate;
 
-import wantest.federate.Federate;
+import hla.rti1516e.AttributeHandle;
+import hla.rti1516e.ObjectClassHandle;
 
-public class Main
+public class Handles
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
 	//----------------------------------------------------------
+	public static ObjectClassHandle CLASS_TEST_OBJECT = null;
+	public static AttributeHandle   ATT_LAST_UPDATED  = null;
+	public static AttributeHandle   ATT_CREATOR_NAME  = null;
+	
+	public static ObjectClassHandle CLASS_TEST_FEDERATE = null;
+	public static AttributeHandle   ATT_FEDERATE_NAME   = null;
 
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
@@ -39,13 +46,12 @@ public class Main
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
-	
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate().runFederate( args );
-	}
 }

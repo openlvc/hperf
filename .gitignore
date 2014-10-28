@@ -16,4 +16,4 @@
 /codebase/build
 /codebase/logs
 /codebase/dist
-
+/codebase/resources/dist/common/logs
