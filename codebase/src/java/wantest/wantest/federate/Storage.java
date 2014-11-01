@@ -77,6 +77,10 @@ public class Storage
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+	
+	/////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////// Report Printing //////////////////////////////////// 
+	/////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * Print a summary report of the activities to the logger
 	 */
@@ -101,6 +105,8 @@ public class Storage
 			logger.info( "        -Reflect:  " + federateReport[1] );
 			logger.info( "" );
 		}
+		
+		printDistribution();
 	}
 
 	/** Find the total number of events that we received */
@@ -172,6 +178,105 @@ public class Storage
 		return new String[]{ discoverString, reflectString };
 	}
 
+	/**
+	 * This method prints two lots of information relating to the distribution of events as
+	 * they were received:
+	 * 
+	 *   * The number of events received for each whole-second block of the test, including
+	 *     the latency. Each reflection is encoded with the time at which it was sent. This
+	 *     is compared on the receiver end to the time at which it arrives, generating the
+	 *     latency.
+	 *     
+	 *   * A distribution graph that shows the number of events received each period.
+	 *     This allows us to visualize the arrival of events in an ascii-graph form
+	 */
+	private void printDistribution()
+	{
+		int totalSeconds = (int)Math.ceil((this.stopTime-this.startTime)/1000);
+		int[][] distribution = new int[totalSeconds][2]; // [0]: event count, [1]: total latency 
+		for( Event event : eventlist )
+		{
+			if( event.type == Event.Type.Discovery )
+				continue; // TODO implement this, but can't measure latency
+			
+			if( event.type == Event.Type.Reflection )
+			{
+				int spotInLine = (int)Math.ceil((event.receivedTimestamp - this.startTime)/1000);
+				distribution[spotInLine][0]++;
+				distribution[spotInLine][1] += (event.receivedTimestamp - event.sentTimestamp);
+			}
+		}
+
+		logger.info( "" );
+		logger.info( " === Event Distribution ===" );
+		logger.info( "" );
+		for( int i = 0; i < distribution.length; i++ )
+		{
+			// "[1s] 17 events, 17ms latency (avg)"
+			
+			int latency = 0;
+			if( distribution[i][0] != 0 )
+				latency = (int)distribution[i][1] / distribution[i][0];
+
+			String line = String.format( "[%2ss] %3d events, %3sms latency (avg)", (i+1), distribution[i][0], latency );
+			logger.info( line );
+		}		
+		
+		// print a nice graph
+		//   1. figure out the max events in any one period so we know how tall our graph must be
+		//   2. loop through each event count level and draw a + if that period had at least that
+		//      many events
+		//
+		//  25|          +
+		//  20|          +
+		//  15| +        +
+		//  10| +  +     +
+		//   5| +  +  +  +
+		//    |--|--|--|--| 5|--|--|--|--|10|--|--|--|--|15|--|--|--|--|20|
+		logger.info( "" );
+		logger.info( "Distribution Graph   " );
+		logger.info( "---------------------" );
+
+		int maxEvents = 0;
+		for( int  i = 0; i < distribution.length; i++ )
+		{
+			if( distribution[i][0] > maxEvents )
+				maxEvents = distribution[i][0];
+		}
+
+		// now draw a nice graph
+		for( int i = maxEvents; i > 0; i-- )
+		{
+			// only draw in groups of 5
+			if( i % 5 != 0 )
+				continue;
+			
+			StringBuffer buffer = new StringBuffer();
+			buffer.append( String.format("%3d|",i) );
+			for( int j = 0; j < distribution.length; j++ )
+			{
+				if( distribution[j][0] >= i )
+					buffer.append( "++ " );
+				else
+					buffer.append( "   " );
+			}
+			
+			// print the line
+			logger.info( buffer );
+		}
+
+		// print the bottom line
+		StringBuffer xaxis = new StringBuffer( "   |" ); // start with the lead in
+		for( int i = 0; i < distribution.length; i++ )
+		{
+			int second = i+1;
+			if( second % 5 == 0 )
+				xaxis.append( String.format("%2d|",second) );
+			else
+				xaxis.append( "--|" );
+		}
+		logger.info( xaxis );		
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////

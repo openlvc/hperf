@@ -4,11 +4,12 @@ function printUsage()
 {
     echo "usage: wantest.sh [--arg <value>]"
     echo ""
-    echo "    --federate-name      Name for this federate"
-    echo "    --federation-name    Name of the federation we're joining"
-    echo "    --loops              Number of loops we should iterate for"
-    echo "    --peers              Comma-separated list of other federate names"
-    echo "    --log-level          TRACE | DEBUG | INFO | WARN | FATAL | OFF"
+    echo "    --federate-name      (REQUIRED) Name for this federate"
+    echo "    --federation-name    (optional) Name of the federation we're joining, default wantest"
+    echo "    --loops              (optional) Number of loops we should iterate for, default 20"
+    echo "    --peers              (REQUIRED) Comma-separated list of other federate names"
+	echo "    --loop-wait          (optional) How long to stall processing events each loop (ms), default 100"
+    echo "    --log-level          (optional) TRACE | DEBUG | INFO | WARN | FATAL | OFF, default INFO"
     echo ""
     exit;
 }

@@ -48,6 +48,7 @@ public class Configuration
 	
 	// execution properties
 	private int loopCount;
+	private int loopWait;
 	private int objectCount; // number of objects we'll create
 	private List<String> peers;
 
@@ -65,6 +66,7 @@ public class Configuration
 		
 		// execution properties
 		this.loopCount = 20;
+		this.loopWait = 100;
 		this.objectCount = 20;
 		this.peers = new ArrayList<String>();
 	}
@@ -108,6 +110,15 @@ public class Configuration
 	{
 		return this.loopCount;
 	}
+
+	/**
+	 * The period of time (ms) to stall while processing callbacks at the end of each loop.
+	 * Defaults to 100ms.
+	 */
+	public int getLoopWait()
+	{
+		return this.loopWait;
+	}
 	
 	/**
 	 * The number of object that this federate should create and publish.
@@ -138,12 +149,12 @@ public class Configuration
 	public void loadCommandLine( String[] args )
 	{
 		/*
-    		--log-level INFO
-    		--config path/to/file.config
     		--federate-name wantest1
     		--federation-name wantest
-    		--loops 20
     		--peers wantest2,wantest3
+    		--loops 20
+    		--loop-wait 100
+    		--log-level INFO
 		*/
 
 		int count = 0;
@@ -195,6 +206,14 @@ public class Configuration
 				continue;
 			}
 
+			if( argument.startsWith("--loop-wait") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.loopWait = Integer.parseInt( args[count+1] );
+				count += 2;
+				continue;
+			}
+			
 			if( argument.startsWith("--peers") )
 			{
 				validateArgIsValue( argument, args[count+1] );

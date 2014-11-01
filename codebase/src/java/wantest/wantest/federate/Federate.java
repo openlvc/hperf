@@ -356,7 +356,7 @@ public class Federate
 		////////////////////////////////////////////////////
 		// stupid bug in Portico at the moment means min-time won't be
 		// respected in certain circumstances - work around it for now
-		long stoptime = System.currentTimeMillis() + 100;
+		long stoptime = System.currentTimeMillis() + configuration.getLoopWait();
 		while( System.currentTimeMillis() < stoptime )
 			rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
 
