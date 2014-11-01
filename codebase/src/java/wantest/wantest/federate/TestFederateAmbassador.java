@@ -23,6 +23,7 @@ package wantest.federate;
 import org.apache.log4j.Logger;
 
 import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.FederateHandleSet;
 import hla.rti1516e.NullFederateAmbassador;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
@@ -127,6 +128,22 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		}
 	}
 	
+	//
+	// Exit Synchronization Point Handling 
+	//
+	public void announceSynchronizationPoint( String label, byte[] tag )
+		throws FederateInternalError
+	{
+		// no-op
+	}
+
+	public void federationSynchronized( String label, FederateHandleSet failedSet )
+		throws FederateInternalError
+	{
+		if( label.equals("READY_TO_RESIGN") )
+			storage.readyToResign = true;
+	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

@@ -53,6 +53,9 @@ public class Storage
 	private long stopTime;
 	private long loopStartTime;
 	private List<Long> loopTimes;
+	
+	// exit synchronization
+	public boolean readyToResign;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -72,6 +75,9 @@ public class Storage
 		this.stopTime = 0;
 		this.loopStartTime = 0;
 		this.loopTimes = new ArrayList<Long>();
+		
+		// exit synchronization
+		this.readyToResign = false;
 	}
 
 	//----------------------------------------------------------

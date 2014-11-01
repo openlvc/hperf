@@ -93,6 +93,9 @@ public class Federate
 
 		// Create and Join
 		this.createAndJoinFederation();
+		
+		// Announce the exit sync-point so we can get it out of the way
+		this.announceExitSyncPoint();
 
 		// Publish and Subscribe
 		this.publishAndSubscribe();
@@ -109,6 +112,9 @@ public class Federate
 		{
 			loop( i+1 );
 		}
+		
+		// wait for the exit sync point
+		this.waitForExitSyncPoint();
 		this.storage.stopTimer();
 		
 		// Log summary information
@@ -362,6 +368,46 @@ public class Federate
 
 	}
 
+	/**
+	 * This method will wait for the federation to synchronize on an "exit point" before
+	 * shutting down. This is done to allow faster finishing federates the opportunity to
+	 * receive the inbound messages from other slower federates. As it currently stands,
+	 * if a fast federate finishes, it will complain that it is missing a large number of
+	 * expected events. These events are those that it isn't receiving because it completed
+	 * quickly and resigned before they could be sent!
+	 * 
+	 * Putting in a dedicated shutdown synchronization will allow all federates to ensure
+	 * they have finished sending, and will mean that any reported loss of packets will be
+	 * due to actual loss, not this false positive.
+	 * 
+	 * While we could use time-stepping, or sync points on each loop, this would have the
+	 * effect of slowing down the whole federation to the pace of its slowest participant.
+	 * This would not be a realistic simulation of what we are likely to see in the wild
+	 * with "real simulations" (lol).
+	 */
+	private void waitForExitSyncPoint() throws RTIexception
+	{
+		rtiamb.synchronizationPointAchieved( "READY_TO_RESIGN" );
+		
+		logger.info( "Waiting for the other federates to finish up" );
+		while( this.storage.readyToResign == false )
+			rtiamb.evokeMultipleCallbacks( 0.1, 1.0 );
+		
+		logger.info( "Everybody is ready to resign" );
+	}
+	
+	private void announceExitSyncPoint()
+	{
+		try
+		{
+			rtiamb.registerFederationSynchronizationPoint( "READY_TO_RESIGN", new byte[]{} );
+		}
+		catch( Exception e )
+		{
+			logger.warn( "Exception while registering exit sync point: "+e.getMessage() );
+		}
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////// Resign and Destroy Federation ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
