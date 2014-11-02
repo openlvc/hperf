@@ -26,6 +26,7 @@ import hla.rti1516e.AttributeHandleSet;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.ObjectInstanceHandle;
+import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.ResignAction;
 import hla.rti1516e.RtiFactoryFactory;
@@ -204,26 +205,37 @@ public class Federate
 	private void publishAndSubscribe() throws RTIexception
 	{
 		// Cache up all the handles
-		CLASS_TEST_FEDERATE = rtiamb.getObjectClassHandle( "HLAobjectRoot.TestFederate" );
-		ATT_FEDERATE_NAME = rtiamb.getAttributeHandle( CLASS_TEST_FEDERATE, "federateName" );
+		OC_TEST_FEDERATE  = rtiamb.getObjectClassHandle( "HLAobjectRoot.TestFederate" );
+		ATT_FEDERATE_NAME = rtiamb.getAttributeHandle( OC_TEST_FEDERATE, "federateName" );
 
-		CLASS_TEST_OBJECT = rtiamb.getObjectClassHandle( "HLAobjectRoot.TestObject" );
-		ATT_CREATOR_NAME = rtiamb.getAttributeHandle( CLASS_TEST_OBJECT, "creatingFederate" );
-		ATT_LAST_UPDATED = rtiamb.getAttributeHandle( CLASS_TEST_OBJECT, "lastUpdated" );
+		OC_TEST_OBJECT   = rtiamb.getObjectClassHandle( "HLAobjectRoot.TestObject" );
+		ATT_LAST_UPDATED = rtiamb.getAttributeHandle( OC_TEST_OBJECT, "lastUpdated" );
+		ATT_CREATOR_NAME = rtiamb.getAttributeHandle( OC_TEST_OBJECT, "creatingFederate" );
+		ATT_BYTE_BUFFER  = rtiamb.getAttributeHandle( OC_TEST_OBJECT, "byteBuffer" );
+		
+		IC_TEST_INTERACTION = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.TestInteraction" );
+		PRM_SENDING_FED     = rtiamb.getParameterHandle( IC_TEST_INTERACTION, "sendingFederate" );
+		PRM_SEND_TIME       = rtiamb.getParameterHandle( IC_TEST_INTERACTION, "sendTime" );
+		PRM_BYTE_BUFFER     = rtiamb.getParameterHandle( IC_TEST_INTERACTION, "byteBuffer" );
 		
 		// Publish and Subscribe
 		// Class: TestFederate
 		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
 		attributes.add( ATT_FEDERATE_NAME );
-		rtiamb.publishObjectClassAttributes( CLASS_TEST_FEDERATE, attributes );
-		rtiamb.subscribeObjectClassAttributes( CLASS_TEST_FEDERATE, attributes );
+		rtiamb.publishObjectClassAttributes( OC_TEST_FEDERATE, attributes );
+		rtiamb.subscribeObjectClassAttributes( OC_TEST_FEDERATE, attributes );
 		
 		// Class: TestObject
 		attributes.clear();
 		attributes.add( ATT_CREATOR_NAME );
 		attributes.add( ATT_LAST_UPDATED );
-		rtiamb.publishObjectClassAttributes( CLASS_TEST_OBJECT, attributes );
-		rtiamb.subscribeObjectClassAttributes( CLASS_TEST_OBJECT, attributes );
+		attributes.add( ATT_BYTE_BUFFER );
+		rtiamb.publishObjectClassAttributes( OC_TEST_OBJECT, attributes );
+		rtiamb.subscribeObjectClassAttributes( OC_TEST_OBJECT, attributes );
+
+		// Class: TestInteraction
+		rtiamb.publishInteractionClass( IC_TEST_INTERACTION );
+		rtiamb.subscribeInteractionClass( IC_TEST_INTERACTION );
 
 		logger.info( "Publish and Subscribe complete" );
 	}
@@ -237,7 +249,7 @@ public class Federate
 		//    Working around the lack of MOM support in the 1516e interface at the moment.
 		//    We get the federate name from the object name
 		logger.info( "Registering HLAobjectRoot.TestFederate object for local federate" );
-		rtiamb.registerObjectInstance( CLASS_TEST_FEDERATE, configuration.getFederateName() );
+		rtiamb.registerObjectInstance( OC_TEST_FEDERATE, configuration.getFederateName() );
 
 		// 2. Create the TestObject instances that we'll use for metrics gathering.
 		//    The initial attribute update happens only once we know all peers are present.
@@ -247,7 +259,7 @@ public class Federate
 			// name of the objects in the form "federate-X" where X is the
 			// sequence number of the object for the local federate
 			String objectName = configuration.getFederateName()+"-"+(i+1);
-			ObjectInstanceHandle oHandle = rtiamb.registerObjectInstance( CLASS_TEST_OBJECT,
+			ObjectInstanceHandle oHandle = rtiamb.registerObjectInstance( OC_TEST_OBJECT,
 			                                                              objectName );
 
 			// store our details about the object for later reference
@@ -346,14 +358,21 @@ public class Federate
 		//////////////////////////////////////////////
 		// send out an update for all local objects //
 		//////////////////////////////////////////////
-		AttributeHandleValueMap values = rtiamb.getAttributeHandleValueMapFactory().create( 1 );
+		AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create( 1 );
+		ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create( 1 );
 		for( TestObject testObject : localObjects.values() )
 		{
-			values.clear();
-			values.put( ATT_LAST_UPDATED, (""+System.currentTimeMillis()).getBytes() );
-			values.put( ATT_CREATOR_NAME, configuration.getFederateName().getBytes() );
-			rtiamb.updateAttributeValues( testObject.getHandle(), values, null );
+			attributes.clear();
+			attributes.put( ATT_LAST_UPDATED, (""+System.currentTimeMillis()).getBytes() );
+			attributes.put( ATT_CREATOR_NAME, configuration.getFederateName().getBytes() );
+			rtiamb.updateAttributeValues( testObject.getHandle(), attributes, null );
 			logger.debug( "  (update) Sent update for object "+testObject.getName() );
+			
+			parameters.clear();
+			parameters.put( PRM_SENDING_FED, configuration.getFederateName().getBytes() );
+			parameters.put( PRM_SEND_TIME, (""+System.currentTimeMillis()).getBytes() );
+			rtiamb.sendInteraction( IC_TEST_INTERACTION, parameters, new byte[]{} );
+			logger.debug( "  (interaction) Sent interaction" );
 		}
 
 

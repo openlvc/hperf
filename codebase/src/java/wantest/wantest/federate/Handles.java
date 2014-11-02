@@ -21,19 +21,32 @@
 package wantest.federate;
 
 import hla.rti1516e.AttributeHandle;
+import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ParameterHandle;
 
 public class Handles
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
 	//----------------------------------------------------------
-	public static ObjectClassHandle CLASS_TEST_OBJECT = null;
+	// Object and Attributes
+	// Class: TestObject
+	public static ObjectClassHandle OC_TEST_OBJECT    = null;
 	public static AttributeHandle   ATT_LAST_UPDATED  = null;
 	public static AttributeHandle   ATT_CREATOR_NAME  = null;
-	
-	public static ObjectClassHandle CLASS_TEST_FEDERATE = null;
-	public static AttributeHandle   ATT_FEDERATE_NAME   = null;
+	public static AttributeHandle   ATT_BYTE_BUFFER   = null;
+
+	// Class: TestFederate
+	public static ObjectClassHandle OC_TEST_FEDERATE  = null;
+	public static AttributeHandle   ATT_FEDERATE_NAME = null;
+
+	// Interactions and Parameters
+	// Class: TestInteraction
+	public static InteractionClassHandle IC_TEST_INTERACTION = null;
+	public static ParameterHandle        PRM_SENDING_FED     = null;
+	public static ParameterHandle        PRM_SEND_TIME       = null;
+	public static ParameterHandle        PRM_BYTE_BUFFER     = null;
 
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES

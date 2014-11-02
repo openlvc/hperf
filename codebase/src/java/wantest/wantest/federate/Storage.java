@@ -98,8 +98,9 @@ public class Storage
 		logger.info( " ========== Execution Report ==========" );
 		logger.info( "   Duration: "+ executionTime );
 		logger.info( "   Events Received: " );
-		logger.info( "      -Discover:  "+ totalReport[0] );
-		logger.info( "      -Reflect:   "+ totalReport[1] );
+		logger.info( "      -Discover:    "+ totalReport[0] );
+		logger.info( "      -Reflect:     "+ totalReport[1] );
+		logger.info( "      -Interaction: "+ totalReport[2] );
 		logger.info( "" );
 		
 		// print the listing for each peer
@@ -107,8 +108,9 @@ public class Storage
 		{
 			String[] federateReport = getFederateEvents( federate );
 			logger.info( "   => Federate ["+federate.getFederateName()+"]" );
-			logger.info( "        -Discover: " + federateReport[0] );
-			logger.info( "        -Reflect:  " + federateReport[1] );
+			logger.info( "        -Discover:    " + federateReport[0] );
+			logger.info( "        -Reflect:     " + federateReport[1] );
+			logger.info( "        -Interaction: " + federateReport[2] );
 			logger.info( "" );
 		}
 		
@@ -118,8 +120,9 @@ public class Storage
 	/** Find the total number of events that we received */
 	private String[] getTotalEvents()
 	{
-		int actualDiscovers = 0;
-		int actualReflects = 0;
+		int actualDiscovers    = 0;
+		int actualReflects     = 0;
+		int actualInteractions = 0;
 
 		for( Event event : eventlist )
 		{
@@ -130,6 +133,9 @@ public class Storage
 					break;
 				case Reflection:
 					actualReflects++;
+					break;
+				case Interaction:
+					actualInteractions++;
 					break;
 			}
 		}
@@ -141,33 +147,41 @@ public class Storage
 
 		int expectedDiscovers = objectCount * peerCount;
 		int expectedReflects = objectCount * peerCount * loopCount;
+		int expectedInteractions = expectedReflects; // we send with each obj update
 		String discoverProblem = (actualDiscovers != expectedDiscovers) ? "(!!)" : "";
 		String reflectProblem = (actualReflects != expectedReflects) ? "(!!)" : "";
+		String interactionProblem = (actualInteractions != expectedInteractions) ? "(!!)" : "";
 		
 		// prepare the final report
 		String discoverString = actualDiscovers+"/"+expectedDiscovers+"   "+discoverProblem;
 		String reflectString = actualReflects+"/"+expectedReflects+"   "+reflectProblem;
-		return new String[]{ discoverString, reflectString };
+		String interactionString = actualInteractions+"/"+expectedInteractions+"   "+interactionProblem;
+		return new String[]{ discoverString, reflectString, interactionString };
 	}
 
 	/** Counts the total event number for a particular federate */
 	private String[] getFederateEvents( TestFederate federate )
 	{
-		int actualDiscovers = 0;
-		int actualReflects = 0;
+		int actualDiscovers    = 0;
+		int actualReflects     = 0;
+		int actualInteractions = 0;
 
+		// look at each event and figure out what we want to do with it
 		for( Event event : eventlist )
 		{
-			if( federate.containsObject(event.objectHandle) == false )
-				continue;
-			
 			switch( event.type )
 			{
 				case Discovery:
-					actualDiscovers++;
+					if( federate.containsObject(event.objectHandle) )
+						actualDiscovers++;
 					break;
 				case Reflection:
-					actualReflects++;
+					if( federate.containsObject(event.objectHandle) )
+						actualReflects++;
+					break;
+				case Interaction:
+					if( event.sender == federate )
+						actualInteractions++;
 					break;
 			}
 		}
@@ -175,13 +189,16 @@ public class Storage
 		// build up the report string
 		int expectedDiscovers = configuration.getObjectCount();
 		int expectedReflects = configuration.getObjectCount() * configuration.getLoopCount();
+		int expectedInteractions = expectedReflects;
 		String discoverProblem = (actualDiscovers != expectedDiscovers) ? "(!!)" : "";
 		String reflectProblem = (actualReflects != expectedReflects) ? "(!!)" : "";
+		String interactionProblem = (actualInteractions != expectedInteractions) ? "(!!)" : "";
 		
 		// prepare the final report
 		String discoverString = actualDiscovers+"/"+expectedDiscovers+"   "+discoverProblem;
 		String reflectString = actualReflects+"/"+expectedReflects+"   "+reflectProblem;
-		return new String[]{ discoverString, reflectString };
+		String interactionString = actualInteractions+"/"+expectedInteractions+"   "+interactionProblem;
+		return new String[]{ discoverString, reflectString, interactionString };
 	}
 
 	/**
@@ -198,6 +215,9 @@ public class Storage
 	 */
 	private void printDistribution()
 	{
+		// create a 2D array with a "line" for each second that the test ran. For each
+		// row we store the total number of events received at that time, as well as the
+		// cumulative latency (which we'll get the average from later)
 		int totalSeconds = (int)Math.ceil((this.stopTime-this.startTime)/1000);
 		int[][] distribution = new int[totalSeconds][2]; // [0]: event count, [1]: total latency 
 		for( Event event : eventlist )
@@ -205,11 +225,19 @@ public class Storage
 			if( event.type == Event.Type.Discovery )
 				continue; // TODO implement this, but can't measure latency
 			
-			if( event.type == Event.Type.Reflection )
+			if( event.type == Event.Type.Reflection || event.type == Event.Type.Interaction )
 			{
 				int spotInLine = (int)Math.ceil((event.receivedTimestamp - this.startTime)/1000);
-				distribution[spotInLine][0]++;
-				distribution[spotInLine][1] += (event.receivedTimestamp - event.sentTimestamp);
+				try
+				{
+					distribution[spotInLine][0]++;
+					distribution[spotInLine][1] += (event.receivedTimestamp - event.sentTimestamp);
+				}
+				catch( ArrayIndexOutOfBoundsException aioob )
+				{
+					logger.error( "ArrayIndexOutOfBoundsException: index="+spotInLine+
+					              ", length="+distribution.length );
+				}
 			}
 		}
 
@@ -233,11 +261,11 @@ public class Storage
 		//   2. loop through each event count level and draw a + if that period had at least that
 		//      many events
 		//
-		//  25|          +
-		//  20|          +
-		//  15| +        +
-		//  10| +  +     +
-		//   5| +  +  +  +
+		//  25|         +
+		//  20|         +
+		//  15|+        +
+		//  10|+  +     +
+		//   5|+  +  +  +
 		//    |--|--|--|--| 5|--|--|--|--|10|--|--|--|--|15|--|--|--|--|20|
 		logger.info( "" );
 		logger.info( "Distribution Graph   " );
@@ -283,6 +311,7 @@ public class Storage
 		}
 		logger.info( xaxis );		
 	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////

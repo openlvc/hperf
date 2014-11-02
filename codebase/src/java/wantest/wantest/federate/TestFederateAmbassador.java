@@ -24,10 +24,12 @@ import org.apache.log4j.Logger;
 
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateHandleSet;
+import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.NullFederateAmbassador;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.OrderType;
+import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 
@@ -56,19 +58,23 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 
+	///////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Object Handling Methods ///////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////
+
 	public void discoverObjectInstance( ObjectInstanceHandle theObject,
 	                                    ObjectClassHandle theObjectClass,
 	                                    String objectName )
 		throws FederateInternalError
 	{
-		if( theObjectClass.equals(Handles.CLASS_TEST_FEDERATE) )
+		if( theObjectClass.equals(Handles.OC_TEST_FEDERATE) )
 		{
 			//
 			// Class: HLAobjectRoot.TestFederate
 			//
 			storage.peers.put( objectName, new TestFederate(objectName) );
 		}
-		else if( theObjectClass.equals(Handles.CLASS_TEST_OBJECT) )
+		else if( theObjectClass.equals(Handles.OC_TEST_OBJECT) )
 		{
 			//
 			// Class: HLAobjectRoot.TestObject
@@ -77,7 +83,7 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 			
 			// attach an event record to both the global time list and the
 			// object-specific list inside each object
-			Event event = new Event( Event.Type.Discovery, theObject, 0, testObject.getCreateTime() );
+			Event event = Event.createDiscover( theObject, testObject.getCreateTime() );
 			storage.eventlist.add( event );
 			testObject.addEvent( event );
 			storage.objects.put( theObject, testObject );
@@ -107,30 +113,59 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		byte[] bytes = theAttributes.getValueReference(Handles.ATT_LAST_UPDATED).array();
 		long sentTimestamp = Long.parseLong( new String(bytes) );
 
+		// find the sending federate in our peer list
+		// this is the first update, get what we need
+		String senderName = new String( theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array() );
+		TestFederate sender = storage.peers.get( senderName );
+		if( sender == null )
+			logger.error( "Received an update from an unknown federate (apparently)" );
+		
+		
 		// only record the event if the object is valid
 		// before then we send an initial update, and we don't want to count that
 		if( testObject.isValid() )
 		{
 			// create an event and link it into the master list and test object's list
-			Event event = new Event( Event.Type.Reflection, theObject, sentTimestamp, receivedTimestamp );
+			Event event = Event.createReflection( theObject, sender, sentTimestamp, receivedTimestamp );
 			storage.eventlist.add( event );
 			testObject.addEvent( event );
 		}
 		else
 		{
-			// this is the first update, get what we need
-			String creator = new String( theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array() );
-			TestFederate federate = storage.peers.get( creator );
-			if( federate == null )
-				logger.error( "Received an update from an unknown federate (apparently)" );
-			else
-				testObject.setCreator( federate );
+			if( sender != null )
+				testObject.setCreator( sender );
 		}
 	}
+
+	///////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////// Interaction Receiving Methods ////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////
+	public void receiveInteraction( InteractionClassHandle interactionClass,
+	                                ParameterHandleValueMap theParameters,
+	                                byte[] userSuppliedTag,
+	                                OrderType sentOrdering,
+	                                TransportationTypeHandle theTransport,
+	                                SupplementalReceiveInfo receiveInfo )
+	    throws FederateInternalError
+	{
+		// get the send timestamp
+		long receivedTimestamp = System.currentTimeMillis();
+		byte[] bytes = theParameters.getValueReference(Handles.PRM_SEND_TIME).array();
+		long sentTimestamp = Long.parseLong( new String(bytes) );
+		
+		// get the sending federate from our peer list
+		bytes = theParameters.getValueReference(Handles.PRM_SENDING_FED).array();
+		String senderName = new String( bytes );
+		TestFederate sender = storage.peers.get( senderName );
+
+		// store the event in the master list
+		Event event = Event.createInteraction( sender, sentTimestamp, receivedTimestamp );
+		storage.eventlist.add( event );
+	}
 	
-	//
-	// Exit Synchronization Point Handling 
-	//
+	///////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////// Exit Synchronization Point Handling /////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////
 	public void announceSynchronizationPoint( String label, byte[] tag )
 		throws FederateInternalError
 	{

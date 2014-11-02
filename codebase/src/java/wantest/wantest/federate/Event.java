@@ -35,12 +35,13 @@ public class Event
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
 	//----------------------------------------------------------
-	public enum Type{ Discovery, Reflection };
+	public enum Type{ Discovery, Reflection, Interaction };
 	
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
 	public Type type;
+	public TestFederate sender;
 	public ObjectInstanceHandle objectHandle;
 	public long sentTimestamp;
 	public long receivedTimestamp;
@@ -48,29 +49,67 @@ public class Event
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public Event( Type type, ObjectInstanceHandle objectHandle )
+	private Event( Type type )
 	{
 		this.type = type;
-		this.objectHandle = objectHandle;
+		this.sender = null;
+		this.objectHandle = null;
 		this.sentTimestamp = 0;
 		this.receivedTimestamp = 0;
-	}
-	
-	public Event( Type type,
-	              ObjectInstanceHandle objectHandle,
-	              long sentTimestamp,
-	              long receivedTimestamp )
-	{
-		this( type, objectHandle );
-		this.sentTimestamp = sentTimestamp;
-		this.receivedTimestamp = receivedTimestamp;
 	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 	
+	public boolean isDiscover()
+	{
+		return this.type == Type.Discovery;
+	}
+	
+	public boolean isReflection()
+	{
+		return this.type == Type.Reflection;
+	}
+	
+	public boolean isInteraction()
+	{
+		return this.type == Type.Interaction;
+	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
+	public static Event createInteraction( TestFederate sender,
+	                                       long sentTimestamp,
+	                                       long receivedTimestamp )
+	{
+		Event event = new Event( Type.Interaction );
+		event.sender = sender;
+		event.sentTimestamp = sentTimestamp;
+		event.receivedTimestamp = receivedTimestamp;
+		return event;
+	}
+	
+	public static Event createDiscover( ObjectInstanceHandle handle, long receivedTimestamp )
+	{
+		Event event = new Event( Type.Discovery );
+		event.objectHandle = handle;
+		event.receivedTimestamp = receivedTimestamp;
+		return event;
+	}
+	
+	public static Event createReflection( ObjectInstanceHandle handle,
+	                                      TestFederate sender,
+	                                      long sentTimestamp,
+	                                      long receivedTimestamp )
+	{
+		Event event = new Event( Type.Reflection );
+		event.objectHandle = handle;
+		event.sender = sender;
+		event.sentTimestamp = sentTimestamp;
+		event.receivedTimestamp = receivedTimestamp;
+		return event;
+	}
+
 }
