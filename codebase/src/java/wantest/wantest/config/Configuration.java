@@ -44,12 +44,12 @@ public class Configuration
 	// federate settings
 	private String federationName;
 	private String federateName;
-
 	
 	// execution properties
 	private int loopCount;
 	private int loopWait;
 	private int objectCount; // number of objects we'll create
+	private int packetSize;  // the minimum size of each update in kb
 	private List<String> peers;
 
 	//----------------------------------------------------------
@@ -68,6 +68,7 @@ public class Configuration
 		this.loopCount = 20;
 		this.loopWait = 100;
 		this.objectCount = 20;
+		this.packetSize = 4;
 		this.peers = new ArrayList<String>();
 	}
 	
@@ -132,6 +133,17 @@ public class Configuration
 	}
 
 	/**
+	 * Gets the minimum size for each packet in KB. This is achieved by using
+	 * a single attribute/parameter in each message that we stuff with random
+	 * data equal to this size. The actual size of packets is slighlty larger
+	 * as we send additional information (federate name and timestamp).
+	 */
+	public int getPacketSize()
+	{
+		return this.packetSize;
+	}
+
+	/**
 	 * A list of all the peer federates that will be part of this test run.
 	 * The returned list contains the name of the federates.
 	 */
@@ -153,6 +165,7 @@ public class Configuration
     		--federation-name wantest
     		--peers wantest2,wantest3
     		--loops 20
+    		--packet-size 32
     		--loop-wait 100
     		--log-level INFO
 		*/
@@ -202,6 +215,14 @@ public class Configuration
 			{
 				validateArgIsValue( argument, args[count+1] );
 				this.loopCount = Integer.parseInt( args[count+1] );
+				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--packet-size") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.packetSize = Integer.parseInt( args[count+1] );
 				count += 2;
 				continue;
 			}

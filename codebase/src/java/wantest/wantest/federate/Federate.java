@@ -65,6 +65,7 @@ public class Federate
 	// runtime object data
 	//private ObjectInstanceHandle localFederate;
 	private Map<ObjectInstanceHandle,TestObject> localObjects;
+	private byte[] fatBuffer; // used to push sizes of messages up to a minimum size
 
 	// report details
 	private Storage storage;
@@ -89,6 +90,16 @@ public class Federate
 		this.configuration.loadCommandLine( args );
 		this.configuration.loadConfigurationFile();
 
+		// Stuff a basic buffer full of some data we can verify on the other side
+		// The size of this is set in configuration and we use it to ensure that
+		// all messages are of at least a certain size. In reality, the size is a
+		// little bigger as we send some additional attributes/parameters, but we
+		// can't have it all with perfectly sized updates now can we!
+		int kbs = configuration.getPacketSize() * 1000;
+		this.fatBuffer = new byte[kbs];
+		for( int i = 0; i < kbs; i++ )
+			this.fatBuffer[i] = (byte)(i % 10);
+		
 		// Set up our central data storage stuff - the fedamb will need it
 		this.storage = new Storage( logger, configuration );
 
@@ -108,6 +119,7 @@ public class Federate
 		this.waitForPeers();
 		
 		// Do our thing
+		logger.info( "Starting to loop, min message size="+configuration.getPacketSize()+"KB" );
 		this.storage.startTimer();
 		for( int i = 0; i < configuration.getLoopCount(); i++ )
 		{
@@ -354,7 +366,7 @@ public class Federate
 	private void loop( int loopNumber ) throws RTIexception
 	{
 		logger.info( "Processing loop ["+loopNumber+"]" );
-
+		
 		//////////////////////////////////////////////
 		// send out an update for all local objects //
 		//////////////////////////////////////////////
@@ -365,12 +377,14 @@ public class Federate
 			attributes.clear();
 			attributes.put( ATT_LAST_UPDATED, (""+System.currentTimeMillis()).getBytes() );
 			attributes.put( ATT_CREATOR_NAME, configuration.getFederateName().getBytes() );
+			attributes.put( ATT_BYTE_BUFFER, this.fatBuffer );
 			rtiamb.updateAttributeValues( testObject.getHandle(), attributes, null );
 			logger.debug( "  (update) Sent update for object "+testObject.getName() );
 			
 			parameters.clear();
 			parameters.put( PRM_SENDING_FED, configuration.getFederateName().getBytes() );
 			parameters.put( PRM_SEND_TIME, (""+System.currentTimeMillis()).getBytes() );
+			parameters.put( PRM_BYTE_BUFFER, this.fatBuffer );
 			rtiamb.sendInteraction( IC_TEST_INTERACTION, parameters, new byte[]{} );
 			logger.debug( "  (interaction) Sent interaction" );
 		}

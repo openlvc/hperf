@@ -8,6 +8,7 @@ function printUsage()
     echo "    --federation-name    (optional) Name of the federation we're joining, default wantest"
     echo "    --loops              (optional) Number of loops we should iterate for, default 20"
     echo "    --peers              (REQUIRED) Comma-separated list of other federate names"
+	echo "    --packet-size        (optional) Minimum size of each message in KB, default 4"
 	echo "    --loop-wait          (optional) How long to stall processing events each loop (ms), default 100"
     echo "    --log-level          (optional) TRACE | DEBUG | INFO | WARN | FATAL | OFF, default INFO"
     echo ""

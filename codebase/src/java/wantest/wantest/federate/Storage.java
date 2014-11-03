@@ -23,6 +23,7 @@ package wantest.federate;
 import hla.rti1516e.ObjectInstanceHandle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,6 +202,9 @@ public class Storage
 		return new String[]{ discoverString, reflectString, interactionString };
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Latency Distribution Methods ///////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * This method prints two lots of information relating to the distribution of events as
 	 * they were received:
@@ -215,46 +219,85 @@ public class Storage
 	 */
 	private void printDistribution()
 	{
-		// create a 2D array with a "line" for each second that the test ran. For each
-		// row we store the total number of events received at that time, as well as the
-		// cumulative latency (which we'll get the average from later)
-		int totalSeconds = (int)Math.ceil((this.stopTime-this.startTime)/1000);
-		int[][] distribution = new int[totalSeconds][2]; // [0]: event count, [1]: total latency 
+		//
+		// break the full event list down into smaller sets for each 1s period
+		//
+		List<List<Event>> periods = new ArrayList<List<Event>>();
+		int totalSeconds = (int)((this.stopTime-this.startTime)/1000);
+		// pre-populate all the lists, so we don't have to worry about checking for null
+		for( int i = 0; i < totalSeconds; i++ )
+			periods.add( new ArrayList<Event>() );
+		
+		//
+		// loop through each event and store it in the appropriate periods list
+		//
 		for( Event event : eventlist )
 		{
 			if( event.type == Event.Type.Discovery )
-				continue; // TODO implement this, but can't measure latency
+				continue; // TODO skip for now - can't easily measure latency
 			
-			if( event.type == Event.Type.Reflection || event.type == Event.Type.Interaction )
-			{
-				int spotInLine = (int)Math.ceil((event.receivedTimestamp - this.startTime)/1000);
-				try
-				{
-					distribution[spotInLine][0]++;
-					distribution[spotInLine][1] += (event.receivedTimestamp - event.sentTimestamp);
-				}
-				catch( ArrayIndexOutOfBoundsException aioob )
-				{
-					logger.error( "ArrayIndexOutOfBoundsException: index="+spotInLine+
-					              ", length="+distribution.length );
-				}
-			}
+			// figure out when the event happened so we know which period to store it in
+			int timeOfEvent = (int)((event.receivedTimestamp-this.startTime)/1000);
+			if( timeOfEvent < 0 )
+				timeOfEvent = 0;
+
+			List<Event> period = periods.get( timeOfEvent );
+			period.add( event );
 		}
 
+		//
+		// now we have everything broken down by period, calculate the stats for each
+		//
+		Period allEvents = analyzePeriod( eventlist );
+		Period[] distribution = new Period[totalSeconds];
+		for( int i = 0; i < periods.size(); i++ )
+		{
+			distribution[i] = analyzePeriod( periods.get(i) );
+		}
+		
+		//     -------------------------------------------
+		//     |        | Latency                        |
+		//     | Evts   | Mean   | Med   | S.Dev | 95%M  |
+		//     -------------------------------------------
+		//  5s |
+		//  4s |
+		//  3s |
+		//
 		logger.info( "" );
 		logger.info( " === Event Distribution ===" );
 		logger.info( "" );
+		logger.info( "    --------------------------------------------" );
+		logger.info( "    |       | Latency                           |" );
+		logger.info( "    | Evts  | Mean   | Med    | S.Dev  | 95%M   |" );
+		logger.info( "    |-------|--------|--------|--------|--------|" );
+	  //logger.info( " 12s| 1000  | 1234ms | 1234ms | 123.45 | 1234ms |" );
+	  //logger.info( "    ---------------------------------------------" );
 		for( int i = 0; i < distribution.length; i++ )
 		{
-			// "[1s] 17 events, 17ms latency (avg)"
-			
-			int latency = 0;
-			if( distribution[i][0] != 0 )
-				latency = (int)distribution[i][1] / distribution[i][0];
+			Period period = distribution[i];
+			String line = String.format( " %2ds| %4d  | %4dms | %4dms | %7.2f | %4dms |",
+			                             (i+1),
+			                             period.count,
+			                             period.mean,
+			                             period.median,
+			                             period.stddev,
+			                             period.mean95 );
 
-			String line = String.format( "[%2ss] %3d events, %3sms latency (avg)", (i+1), distribution[i][0], latency );
 			logger.info( line );
-		}		
+		}
+
+		logger.info( " ----------------------------------------------" );
+		
+		// log the information for the full dataset
+		String line = String.format( " All| %4d  | %4dms | %4dms | %7.2f | %4dms |",
+		                             allEvents.count,
+		                             allEvents.mean,
+		                             allEvents.median,
+		                             allEvents.stddev,
+		                             allEvents.mean95 );
+		logger.info( line );
+		logger.info( " ----------------------------------------------" );
+
 		
 		// print a nice graph
 		//   1. figure out the max events in any one period so we know how tall our graph must be
@@ -272,10 +315,10 @@ public class Storage
 		logger.info( "---------------------" );
 
 		int maxEvents = 0;
-		for( int  i = 0; i < distribution.length; i++ )
+		for( int i = 0; i < distribution.length; i++ )
 		{
-			if( distribution[i][0] > maxEvents )
-				maxEvents = distribution[i][0];
+			if( distribution[i].count > maxEvents )
+				maxEvents = distribution[i].count;
 		}
 
 		// now draw a nice graph
@@ -289,7 +332,7 @@ public class Storage
 			buffer.append( String.format("%3d|",i) );
 			for( int j = 0; j < distribution.length; j++ )
 			{
-				if( distribution[j][0] >= i )
+				if( distribution[j].count >= i )
 					buffer.append( "++ " );
 				else
 					buffer.append( "   " );
@@ -310,6 +353,93 @@ public class Storage
 				xaxis.append( "--|" );
 		}
 		logger.info( xaxis );		
+	}
+
+	/**
+	 * Analyze the given period to get some basic information about its values
+	 */
+	private Period analyzePeriod( List<Event> list )
+	{
+		// TODO add discovery support when we can figure out a simple way to measure latency
+		list = trimDiscoverEvents( list );
+		
+		// fill the period with information about the:
+		//   (1) number of evnets
+		//   (2) mean of all events
+		//   (3) median of all events
+		//   (4) standard deviation
+		//   (5) mean of all events in 95% range
+		Period period = new Period();
+		period.count = list.size(); // (1) count
+		if( period.count == 0 )
+			return period; // cya!!
+
+		// get the mean and a list of just the latencies
+		int[] latencies = new int[period.count];
+		int cumulativeLatency = 0;
+		for( int i = 0; i < list.size(); i++ )
+		{
+			Event event = list.get(i);
+			int latency = (int)(event.receivedTimestamp - event.sentTimestamp);
+			latencies[i] = latency;
+			cumulativeLatency += latency;
+		}
+		
+		// now we can figure out the mean
+		period.mean = (int)Math.floor(cumulativeLatency / period.count); // (2) mean
+		
+		// sort the list so we can figure out the median
+		Arrays.sort( latencies );
+		
+		// figure out standard deviation
+		int medianIndex = (int)Math.ceil(period.count/2);
+		long sum = 0;
+		for( int i = 0; i < latencies.length; i++ )
+		{
+			sum += Math.pow(latencies[i]-period.mean, 2);
+
+			// is this the median?
+			if( i == medianIndex )
+				period.median = latencies[i]; // (3) median
+		}
+		
+		double variance = sum / period.count;
+		period.stddev = Math.sqrt( variance ); // (4) stddev
+		
+		// get the mean of values within 2stddev of mean
+		int low  = (int)(period.mean - (2*period.stddev));
+		int high = (int)(period.mean + (2*period.stddev));
+		int number = 0; // number of samples
+		sum = 0; // re-purpose sum
+		
+		for( int i = 0; i < list.size(); i++ )
+		{
+			if( latencies[i] >= low && latencies[i] <= high )
+			{
+				sum += latencies[i];
+				number++;
+			}
+		}
+		
+		period.mean95 = (int)Math.floor(sum / number); // (5) mean95
+		
+		return period;
+	}
+
+	/**
+	 * For now we don't count discovery events in our stats -- too hard to measure latency.
+	 * This method takes an event set and trims out the discovery events.
+	 */
+	private List<Event> trimDiscoverEvents( List<Event> source )
+	{
+		List<Event> trimmed = new ArrayList<Event>();
+		for( Event event : source )
+		{
+			if( event.isDiscover() == false )
+				trimmed.add( event );
+		}
+
+		return trimmed;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,4 +473,17 @@ public class Storage
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
+	
+	////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////// Priave Class: Period ///////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+	private class Period
+	{
+		public int count     = 0;
+		public int mean      = 0;   // rounding
+		public int median    = 0;
+		public double stddev = 0.0;
+		public int mean95    = 0;   // rounding
+	}
+
 }
