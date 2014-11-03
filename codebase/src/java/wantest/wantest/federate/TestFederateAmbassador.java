@@ -110,8 +110,9 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		
 		// deserialize the attributes
 		long receivedTimestamp = System.currentTimeMillis();
-		byte[] bytes = theAttributes.getValueReference(Handles.ATT_LAST_UPDATED).array();
-		long sentTimestamp = Long.parseLong( new String(bytes) );
+		byte[] timestampBytes = theAttributes.getValueReference(Handles.ATT_LAST_UPDATED).array();
+		long sentTimestamp = Long.parseLong( new String(timestampBytes) );
+		byte[] nameBytes = theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array();
 
 		// find the sending federate in our peer list
 		// this is the first update, get what we need
@@ -125,8 +126,15 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		// before then we send an initial update, and we don't want to count that
 		if( testObject.isValid() )
 		{
+			long dataSize = theAttributes.getValueReference(Handles.ATT_BYTE_BUFFER).remaining();
+
 			// create an event and link it into the master list and test object's list
-			Event event = Event.createReflection( theObject, sender, sentTimestamp, receivedTimestamp );
+			Event event = Event.createReflection( theObject,
+			                                      sender,
+			                                      sentTimestamp,
+			                                      receivedTimestamp,
+			                                      dataSize+timestampBytes.length+nameBytes.length );
+			
 			storage.eventlist.add( event );
 			testObject.addEvent( event );
 		}
@@ -150,16 +158,22 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	{
 		// get the send timestamp
 		long receivedTimestamp = System.currentTimeMillis();
-		byte[] bytes = theParameters.getValueReference(Handles.PRM_SEND_TIME).array();
-		long sentTimestamp = Long.parseLong( new String(bytes) );
+		byte[] timestampBytes = theParameters.getValueReference(Handles.PRM_SEND_TIME).array();
+		long sentTimestamp = Long.parseLong( new String(timestampBytes) );
 		
 		// get the sending federate from our peer list
-		bytes = theParameters.getValueReference(Handles.PRM_SENDING_FED).array();
-		String senderName = new String( bytes );
+		byte[] nameBytes = theParameters.getValueReference(Handles.PRM_SENDING_FED).array();
+		String senderName = new String( nameBytes );
 		TestFederate sender = storage.peers.get( senderName );
+		
+		// get the value buffer we use to pad things out
+		long dataSize = theParameters.getValueReference(Handles.PRM_BYTE_BUFFER).remaining();
 
 		// store the event in the master list
-		Event event = Event.createInteraction( sender, sentTimestamp, receivedTimestamp );
+		Event event = Event.createInteraction( sender,
+		                                       sentTimestamp,
+		                                       receivedTimestamp,
+		                                       dataSize+timestampBytes.length+nameBytes.length);
 		storage.eventlist.add( event );
 	}
 	

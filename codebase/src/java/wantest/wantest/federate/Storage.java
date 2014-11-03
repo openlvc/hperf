@@ -223,7 +223,8 @@ public class Storage
 		// break the full event list down into smaller sets for each 1s period
 		//
 		List<List<Event>> periods = new ArrayList<List<Event>>();
-		int totalSeconds = (int)((this.stopTime-this.startTime)/1000);
+		long runtime = this.stopTime - this.startTime;
+		int totalSeconds = (int)runtime/1000;
 		// pre-populate all the lists, so we don't have to worry about checking for null
 		for( int i = 0; i < totalSeconds; i++ )
 			periods.add( new ArrayList<Event>() );
@@ -265,41 +266,45 @@ public class Storage
 		//
 		logger.info( "" );
 		logger.info( " === Event Distribution ===" );
-		logger.info( "" );
-		logger.info( "    --------------------------------------------" );
-		logger.info( "    |       | Latency                           |" );
-		logger.info( "    | Evts  | Mean   | Med    | S.Dev  | 95%M   |" );
-		logger.info( "    |-------|--------|--------|--------|--------|" );
-	  //logger.info( " 12s| 1000  | 1234ms | 1234ms | 123.45 | 1234ms |" );
-	  //logger.info( "    ---------------------------------------------" );
+		logger.info( "" );		
+		logger.info( "    ----------------------------------------------------------------------" );
+		logger.info( "    |       | Latency                            | Throughput            |" );
+		logger.info( "    | Evts  | Mean   | Med    | S.Dev   | 95%M   | Per-Second | Total    |" );
+		logger.info( "    |-------|--------|--------|---------|--------|-----------------------|" );
+	  //logger.info( " 12s| 1000  | 1234ms | 1234ms | 1234.56 | 1234ms |  123.4MB/s | 1234.5MB |" );
+	  //logger.info( "    ----------------------------------------------------------------------" );
 		for( int i = 0; i < distribution.length; i++ )
 		{
 			Period period = distribution[i];
-			String line = String.format( " %2ds| %4d  | %4dms | %4dms | %7.2f | %4dms |",
+			String line = String.format( " %2ds| %4d  | %4dms | %4dms | %7.2f | %4dms |  %.9s | %.8s |",
 			                             (i+1),
 			                             period.count,
 			                             period.mean,
 			                             period.median,
 			                             period.stddev,
-			                             period.mean95 );
+			                             period.mean95,
+			                             period.getAvgThroughputString(1000),
+			                             period.getTotalThroughputString() );
 
 			logger.info( line );
 		}
 
-		logger.info( " ----------------------------------------------" );
+		logger.info( " -------------------------------------------------------------------------" );
 		
 		// log the information for the full dataset
-		String line = String.format( " All| %4d  | %4dms | %4dms | %7.2f | %4dms |",
+		String line = String.format( " All| %4d  | %4dms | %4dms | %7.2f | %4dms |  %.9s | %.8s |",
 		                             allEvents.count,
 		                             allEvents.mean,
 		                             allEvents.median,
 		                             allEvents.stddev,
-		                             allEvents.mean95 );
+		                             allEvents.mean95,
+		                             allEvents.getAvgThroughputString(runtime),
+		                             allEvents.getTotalThroughputString() );
 		logger.info( line );
-		logger.info( " ----------------------------------------------" );
+		logger.info( " -------------------------------------------------------------------------" );
 
 		
-		// print a nice graph
+		// print a nice event distribution graph
 		//   1. figure out the max events in any one period so we know how tall our graph must be
 		//   2. loop through each event count level and draw a + if that period had at least that
 		//      many events
@@ -369,6 +374,7 @@ public class Storage
 		//   (3) median of all events
 		//   (4) standard deviation
 		//   (5) mean of all events in 95% range
+		//   (6) total received data in bytes
 		Period period = new Period();
 		period.count = list.size(); // (1) count
 		if( period.count == 0 )
@@ -383,8 +389,9 @@ public class Storage
 			int latency = (int)(event.receivedTimestamp - event.sentTimestamp);
 			latencies[i] = latency;
 			cumulativeLatency += latency;
+			period.datasize += event.datasize; // (6) data size
 		}
-		
+
 		// now we can figure out the mean
 		period.mean = (int)Math.floor(cumulativeLatency / period.count); // (2) mean
 		
@@ -479,11 +486,53 @@ public class Storage
 	////////////////////////////////////////////////////////////////////////////////////////////
 	private class Period
 	{
-		public int count     = 0;
-		public int mean      = 0;   // rounding
-		public int median    = 0;
-		public double stddev = 0.0;
-		public int mean95    = 0;   // rounding
+		public int count         = 0;
+		public int mean          = 0;   // rounding
+		public int median        = 0;
+		public double stddev     = 0.0;
+		public int mean95        = 0;   // rounding
+		public long datasize     = 0;   // in bytes
+		
+		public String getAvgThroughputString( long periodmillis )
+		{
+			// datasize is stored in bytes
+			// we want to return string like:
+			//   123.45KB/s
+			//   123.45MB/s
+			
+			// let's see how much we have so we can figure out the right qualifier
+			double totalkb = datasize / 1024;
+			double totalmb = totalkb / 1024;
+			double totalgb = totalmb / 1024;
+			double kbs = totalkb / (periodmillis/1000);
+			double mbs = totalmb / (periodmillis/1000);
+			double gbs = totalgb / (periodmillis/1000);
+			if( gbs > 1 )
+				return String.format( "%5.1fGB/s", mbs );
+			else if( mbs > 1 )
+				return String.format( "%5.1fMB/s", mbs );
+			else
+				return String.format( "%5.1fKB/s", kbs );
+		}
+		
+		public String getTotalThroughputString()
+		{
+			// datasize is stored in bytes
+			// we want to return string like:
+			//   123.45KB
+			//   123.45MB
+			
+			// let's see how much we have so we can figure out the right qualifier
+			double kbs = datasize / 1024;
+			double mbs = kbs / 1024;
+			double gbs = mbs / 1024;
+			if( gbs > 1 )
+				return String.format( "%6.1fGB", gbs );
+			else if( mbs > 1 )
+				return String.format( "%6.1fMB", mbs );
+			else
+				return String.format( "%6.1fKB", kbs );
+		}
 	}
 
 }

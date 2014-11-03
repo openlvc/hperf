@@ -95,7 +95,7 @@ public class Federate
 		// all messages are of at least a certain size. In reality, the size is a
 		// little bigger as we send some additional attributes/parameters, but we
 		// can't have it all with perfectly sized updates now can we!
-		int kbs = configuration.getPacketSize() * 1000;
+		int kbs = configuration.getPacketSize() * 1024;
 		this.fatBuffer = new byte[kbs];
 		for( int i = 0; i < kbs; i++ )
 			this.fatBuffer[i] = (byte)(i % 10);

@@ -45,6 +45,7 @@ public class Event
 	public ObjectInstanceHandle objectHandle;
 	public long sentTimestamp;
 	public long receivedTimestamp;
+	public long datasize;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -56,6 +57,7 @@ public class Event
 		this.objectHandle = null;
 		this.sentTimestamp = 0;
 		this.receivedTimestamp = 0;
+		this.datasize = 0;
 	}
 
 	//----------------------------------------------------------
@@ -76,18 +78,20 @@ public class Event
 	{
 		return this.type == Type.Interaction;
 	}
-
+	
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
 	public static Event createInteraction( TestFederate sender,
 	                                       long sentTimestamp,
-	                                       long receivedTimestamp )
+	                                       long receivedTimestamp,
+	                                       long datasize )
 	{
 		Event event = new Event( Type.Interaction );
 		event.sender = sender;
 		event.sentTimestamp = sentTimestamp;
 		event.receivedTimestamp = receivedTimestamp;
+		event.datasize = datasize;
 		return event;
 	}
 	
@@ -102,13 +106,15 @@ public class Event
 	public static Event createReflection( ObjectInstanceHandle handle,
 	                                      TestFederate sender,
 	                                      long sentTimestamp,
-	                                      long receivedTimestamp )
+	                                      long receivedTimestamp,
+	                                      long datasize )
 	{
 		Event event = new Event( Type.Reflection );
 		event.objectHandle = handle;
 		event.sender = sender;
 		event.sentTimestamp = sentTimestamp;
 		event.receivedTimestamp = receivedTimestamp;
+		event.datasize = datasize;
 		return event;
 	}
 
