@@ -375,16 +375,16 @@ public class Federate
 		for( TestObject testObject : localObjects.values() )
 		{
 			attributes.clear();
-			attributes.put( ATT_LAST_UPDATED, (""+System.currentTimeMillis()).getBytes() );
 			attributes.put( ATT_CREATOR_NAME, configuration.getFederateName().getBytes() );
 			attributes.put( ATT_BYTE_BUFFER, this.fatBuffer );
+			attributes.put( ATT_LAST_UPDATED, (""+System.currentTimeMillis()).getBytes() );
 			rtiamb.updateAttributeValues( testObject.getHandle(), attributes, null );
 			logger.debug( "  (update) Sent update for object "+testObject.getName() );
 			
 			parameters.clear();
 			parameters.put( PRM_SENDING_FED, configuration.getFederateName().getBytes() );
-			parameters.put( PRM_SEND_TIME, (""+System.currentTimeMillis()).getBytes() );
 			parameters.put( PRM_BYTE_BUFFER, this.fatBuffer );
+			parameters.put( PRM_SEND_TIME, (""+System.currentTimeMillis()).getBytes() );
 			rtiamb.sendInteraction( IC_TEST_INTERACTION, parameters, new byte[]{} );
 			logger.debug( "  (interaction) Sent interaction" );
 		}

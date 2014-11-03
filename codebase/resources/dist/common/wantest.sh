@@ -11,6 +11,7 @@ function printUsage()
 	echo "    --packet-size        (optional) Minimum size of each message in KB, default 4"
 	echo "    --loop-wait          (optional) How long to stall processing events each loop (ms), default 100"
     echo "    --log-level          (optional) TRACE | DEBUG | INFO | WARN | FATAL | OFF, default INFO"
+	echo "    --print-event-log    (optional) If specified, prints a list of vital stats on all events"
     echo ""
     exit;
 }

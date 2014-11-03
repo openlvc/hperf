@@ -51,6 +51,7 @@ public class Configuration
 	private int objectCount; // number of objects we'll create
 	private int packetSize;  // the minimum size of each update in kb
 	private List<String> peers;
+	private boolean printEventLog;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -70,6 +71,7 @@ public class Configuration
 		this.objectCount = 20;
 		this.packetSize = 4;
 		this.peers = new ArrayList<String>();
+		this.printEventLog = false;
 	}
 	
 	//----------------------------------------------------------
@@ -152,7 +154,11 @@ public class Configuration
 		return this.peers;
 	}
 	
-	
+	public boolean getPrintEventLog()
+	{
+		return this.printEventLog;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////// Configuration File Loading Methods ////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,6 +173,7 @@ public class Configuration
     		--loops 20
     		--packet-size 32B/KB/MB
     		--loop-wait 100
+    		--print-event-log
 		*/
 
 		int count = 0;
@@ -234,7 +241,7 @@ public class Configuration
 				}
 				else if( packetString.endsWith("B") )
 				{
-					int size = Integer.parseInt( packetString.substring(0,packetString.length()) );
+					int size = Integer.parseInt( packetString.substring(0,packetString.length()-1) );
 					this.packetSize = size;
 				}
 				else
@@ -263,6 +270,13 @@ public class Configuration
 					peers.add( tokenizer.nextToken() );
 				
 				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--print-event-log") )
+			{
+				this.printEventLog = true;
+				count++;
 				continue;
 			}
 		}

@@ -116,6 +116,7 @@ public class Storage
 		}
 		
 		printDistribution();
+		printEventLog();
 	}
 
 	/** Find the total number of events that we received */
@@ -202,6 +203,58 @@ public class Storage
 		return new String[]{ discoverString, reflectString, interactionString };
 	}
 
+	private void printEventLog()
+	{
+		if( configuration.getPrintEventLog() == false )
+			return;
+
+		logger.info( "" );
+		logger.info( "  ======= Event Log ========" );
+		int count = 0;
+		for( Event event : eventlist )
+		{
+			if( event.type == Event.Type.Discovery )
+			{
+				String line = String.format( "[%d] (Discover) handle=%s, received=%d",
+				                             ++count,
+				                             event.objectHandle.toString(),
+				                             event.receivedTimestamp );
+				logger.info( line ); 
+			}
+			else if( event.type == Event.Type.Reflection || event.type == Event.Type.Interaction )
+			{
+				String type = event.type == Event.Type.Reflection ? "    (Reflect)" : "(Interaction)";
+				long latency = event.receivedTimestamp - event.sentTimestamp;
+				String pattern = "[%04d] %s sender=%s, size=%s, latency=%3dms   [received=%d, sent=%d]";
+				String line = String.format( pattern,				                             
+				                             ++count,
+				                             type,
+				                             event.sender,
+				                             getSizeString(event.datasize),
+				                             latency,
+				                             event.receivedTimestamp,
+				                             event.sentTimestamp );
+				logger.info( line );
+			}
+			
+		}
+	}
+	
+	private String getSizeString( long size )
+	{
+		double totalkb = size / 1024;
+		double totalmb = totalkb / 1024;
+		double totalgb = totalmb / 1024;
+		if( totalgb > 1 )
+			return totalgb+"GB";
+		else if( totalmb > 1 )
+			return totalmb+"MB";
+		else if( totalkb > 1 )
+			return totalkb+"KB";
+		else
+			return size+"B";
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Latency Distribution Methods ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
