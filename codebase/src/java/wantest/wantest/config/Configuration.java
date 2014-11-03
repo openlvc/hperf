@@ -165,9 +165,8 @@ public class Configuration
     		--federation-name wantest
     		--peers wantest2,wantest3
     		--loops 20
-    		--packet-size 32
+    		--packet-size 32B/KB/MB
     		--loop-wait 100
-    		--log-level INFO
 		*/
 
 		int count = 0;
@@ -222,7 +221,28 @@ public class Configuration
 			if( argument.startsWith("--packet-size") )
 			{
 				validateArgIsValue( argument, args[count+1] );
-				this.packetSize = Integer.parseInt( args[count+1] );
+				String packetString = args[count+1];
+				if( packetString.endsWith("K") )
+				{
+					int size = Integer.parseInt( packetString.substring(0,packetString.length()) );
+					this.packetSize = size * 1024;
+				}
+				else if( packetString.endsWith("M") )
+				{
+					int size = Integer.parseInt( packetString.substring(0,packetString.length()) );
+					this.packetSize = size * 1024 * 1024;
+				}
+				else if( packetString.endsWith("B") )
+				{
+					int size = Integer.parseInt( packetString.substring(0,packetString.length()) );
+					this.packetSize = size;
+				}
+				else
+				{
+					// assume bytes if there is not information
+					this.packetSize = Integer.parseInt( packetString );
+				}
+				
 				count += 2;
 				continue;
 			}
