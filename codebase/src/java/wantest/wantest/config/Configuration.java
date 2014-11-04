@@ -51,7 +51,9 @@ public class Configuration
 	private int objectCount; // number of objects we'll create
 	private int packetSize;  // the minimum size of each update in kb
 	private List<String> peers;
+
 	private boolean printEventLog;
+	private String csvFile;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -71,7 +73,9 @@ public class Configuration
 		this.objectCount = 20;
 		this.packetSize = 4;
 		this.peers = new ArrayList<String>();
+		
 		this.printEventLog = false;
+		this.csvFile = null;
 	}
 	
 	//----------------------------------------------------------
@@ -157,6 +161,16 @@ public class Configuration
 	public boolean getPrintEventLog()
 	{
 		return this.printEventLog;
+	}
+
+	public boolean getExportCSV()
+	{
+		return this.csvFile != null;
+	}
+	
+	public String getCSVFile()
+	{
+		return this.csvFile;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,6 +291,14 @@ public class Configuration
 			{
 				this.printEventLog = true;
 				count++;
+				continue;
+			}
+			
+			if( argument.startsWith("--export-csv") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.csvFile = args[count+1];
+				count += 2;
 				continue;
 			}
 		}

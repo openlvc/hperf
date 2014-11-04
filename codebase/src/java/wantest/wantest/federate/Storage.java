@@ -22,6 +22,8 @@ package wantest.federate;
 
 import hla.rti1516e.ObjectInstanceHandle;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,7 +86,35 @@ public class Storage
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+	public void startTimer()
+	{
+		this.startTime = System.currentTimeMillis();
+	}
 	
+	public void stopTimer()
+	{
+		this.stopTime = System.currentTimeMillis();
+	}
+	
+	public void startLoopTimer() throws RuntimeException
+	{
+		if( this.loopStartTime != 0 )
+			throw new RuntimeException( "Tried to start loop timer while it's already active :S" );
+		
+		this.loopStartTime = System.currentTimeMillis();
+	}
+	
+	public void stopLoopTimer()
+	{
+		long looptime = System.currentTimeMillis() - this.loopStartTime;
+		this.loopTimes.add( looptime );
+		this.loopStartTime = 0;
+	}	
+
 	/////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////// Report Printing //////////////////////////////////// 
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +147,8 @@ public class Storage
 		
 		printDistribution();
 		printEventLog();
+		if( configuration.getExportCSV() )
+			exportEventsToFile();
 	}
 
 	/** Find the total number of events that we received */
@@ -503,31 +535,46 @@ public class Storage
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
+	///////////////////////////////////// CSV File Dumping /////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
-	public void startTimer()
+	private void exportEventsToFile()
 	{
-		this.startTime = System.currentTimeMillis();
-	}
-	
-	public void stopTimer()
-	{
-		this.stopTime = System.currentTimeMillis();
-	}
-	
-	public void startLoopTimer() throws RuntimeException
-	{
-		if( this.loopStartTime != 0 )
-			throw new RuntimeException( "Tried to start loop timer while it's already active :S" );
+		File file = new File( configuration.getCSVFile() );
+		if( file.exists() )
+			logger.warn( "File ["+file.getAbsolutePath()+"] exists, about to overwrite" );
 		
-		this.loopStartTime = System.currentTimeMillis();
-	}
-	
-	public void stopLoopTimer()
-	{
-		long looptime = System.currentTimeMillis() - this.loopStartTime;
-		this.loopTimes.add( looptime );
-		this.loopStartTime = 0;
+		logger.info( "Writing eventlog to file: "+file.getAbsolutePath() );
+		
+		try
+		{
+			PrintWriter writer = new PrintWriter( file );
+			writer.println( "ID, Type, Sender, Size, Latency, Sent Timestamp, Received Timestamp" );
+			int count = 0;
+			for( Event event : eventlist )
+			{
+				if( event.type == Event.Type.Discovery )
+					continue;
+				
+				String type = event.type == Event.Type.Reflection ? "Reflection" : "Interaction";
+				long latency = event.receivedTimestamp - event.sentTimestamp;
+				String line = String.format( "%d, %s, %s, %s, %d, %d, %d",
+				                             ++count,
+				                             type,
+				                             event.sender.toString(),
+				                             event.datasize,
+				                             latency,
+				                             event.receivedTimestamp,
+				                             event.sentTimestamp );
+				writer.println( line );
+			}
+			
+			writer.close();
+			logger.info( "Write "+count+" records from eventlog to file" );
+		}
+		catch( Exception e )
+		{
+			logger.error( "Error writing event list to CSV file", e );
+		}
 	}
 
 	//----------------------------------------------------------
