@@ -71,7 +71,7 @@ public class Configuration
 		this.loopCount = 20;
 		this.loopWait = 100;
 		this.objectCount = 20;
-		this.packetSize = 4;
+		this.packetSize = 4096;
 		this.peers = new ArrayList<String>();
 		
 		this.printEventLog = false;
@@ -245,12 +245,12 @@ public class Configuration
 				String packetString = args[count+1];
 				if( packetString.endsWith("K") )
 				{
-					int size = Integer.parseInt( packetString.substring(0,packetString.length()) );
+					int size = Integer.parseInt( packetString.substring(0,packetString.length()-1) );
 					this.packetSize = size * 1024;
 				}
 				else if( packetString.endsWith("M") )
 				{
-					int size = Integer.parseInt( packetString.substring(0,packetString.length()) );
+					int size = Integer.parseInt( packetString.substring(0,packetString.length()-1) );
 					this.packetSize = size * 1024 * 1024;
 				}
 				else if( packetString.endsWith("B") )

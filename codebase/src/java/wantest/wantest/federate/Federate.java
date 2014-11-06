@@ -95,9 +95,9 @@ public class Federate
 		// all messages are of at least a certain size. In reality, the size is a
 		// little bigger as we send some additional attributes/parameters, but we
 		// can't have it all with perfectly sized updates now can we!
-		int kbs = configuration.getPacketSize() * 1024;
-		this.fatBuffer = new byte[kbs];
-		for( int i = 0; i < kbs; i++ )
+		int bytes = configuration.getPacketSize();
+		this.fatBuffer = new byte[bytes];
+		for( int i = 0; i < bytes; i++ )
 			this.fatBuffer[i] = (byte)(i % 10);
 		
 		// Set up our central data storage stuff - the fedamb will need it
