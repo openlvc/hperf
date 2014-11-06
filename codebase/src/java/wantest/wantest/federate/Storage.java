@@ -262,7 +262,7 @@ public class Storage
 				                             ++count,
 				                             type,
 				                             event.sender,
-				                             getSizeString(event.datasize),
+				                             Utils.getSizeString(event.datasize),
 				                             latency,
 				                             event.receivedTimestamp,
 				                             event.sentTimestamp );
@@ -271,22 +271,7 @@ public class Storage
 			
 		}
 	}
-	
-	private String getSizeString( long size )
-	{
-		double totalkb = size / 1024;
-		double totalmb = totalkb / 1024;
-		double totalgb = totalmb / 1024;
-		if( totalgb > 1 )
-			return totalgb+"GB";
-		else if( totalmb > 1 )
-			return totalmb+"MB";
-		else if( totalkb > 1 )
-			return totalkb+"KB";
-		else
-			return size+"B";
-	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Latency Distribution Methods ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////

@@ -102,6 +102,8 @@ public class Federate
 		
 		// Set up our central data storage stuff - the fedamb will need it
 		this.storage = new Storage( logger, configuration );
+		String sizeString = Utils.getSizeString( configuration.getPacketSize() );
+		logger.info( "Minimum message size="+sizeString );
 
 		// Create and Join
 		this.createAndJoinFederation();
@@ -119,7 +121,6 @@ public class Federate
 		this.waitForPeers();
 		
 		// Do our thing
-		logger.info( "Starting to loop, min message size="+configuration.getPacketSize()+"KB" );
 		this.storage.startTimer();
 		for( int i = 0; i < configuration.getLoopCount(); i++ )
 		{
