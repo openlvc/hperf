@@ -563,8 +563,8 @@ public class Storage
 				                             event.sender.toString(),
 				                             event.datasize,
 				                             latency,
-				                             event.receivedTimestamp,
-				                             event.sentTimestamp );
+				                             event.sentTimestamp,
+				                             event.receivedTimestamp );
 				writer.println( line );
 			}
 			
