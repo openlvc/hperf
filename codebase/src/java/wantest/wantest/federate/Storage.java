@@ -323,7 +323,7 @@ public class Storage
 				continue; // TODO skip for now - can't easily measure latency
 			
 			// figure out when the event happened so we know which period to store it in
-			int timeOfEvent = (int)((event.receivedTimestamp-this.startTime)/1000);
+			int timeOfEvent = (int)Math.floor( ((event.receivedTimestamp-this.startTime)/1000) );
 			if( timeOfEvent < 0 )
 				timeOfEvent = 0;
 
