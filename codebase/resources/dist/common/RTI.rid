@@ -40,7 +40,7 @@
 #        federation. If this is enabled, the FOM is logged to the INFO level (so make sure you
 #        have logging turned up high enough). By default this is disabled.
 #
-portico.fom.print = enabled
+# portico.fom.print = enabled
 
 # (1.5) Logging by Handle/Name
 #        Making sense of log files can be difficult. To help make sense of this data, various bits
