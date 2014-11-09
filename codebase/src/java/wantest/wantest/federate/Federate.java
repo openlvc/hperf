@@ -134,6 +134,9 @@ public class Federate
 		// Log summary information
 		this.storage.printReport();
 		
+		// print the queue size for the federate (damn well hope it is 0!) before we jump ship
+		printLrcQueueSize();
+
 		// Get out of here
 		this.resignAndDestroy();
 	}
@@ -153,6 +156,12 @@ public class Federate
 
 		// attach the appender		
 		logger.addAppender( appender );
+	}
+	
+	private void printLrcQueueSize()
+	{
+		int size = ((org.portico.impl.hla1516e.Rti1516eAmbassador)rtiamb).getHelper().getState().getQueue().getSize();
+		logger.info( "LRC Queue has ["+size+"] unprocessed messages" );
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
