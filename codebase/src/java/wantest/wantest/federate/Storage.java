@@ -312,6 +312,10 @@ public class Storage
 			if( timeOfEvent < 0 )
 				timeOfEvent = 0;
 
+			// something has a habit of tipping over the edge to the next second
+			// giving an index out of bounds by asking for index 19 e.g. in a 19 sized list
+			while( timeOfEvent >= periods.size() )
+				timeOfEvent--;
 			List<Event> period = periods.get( timeOfEvent );
 			period.add( event );
 		}
