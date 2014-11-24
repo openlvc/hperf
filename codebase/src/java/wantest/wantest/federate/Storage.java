@@ -294,7 +294,10 @@ public class Storage
 		//
 		List<List<Event>> periods = new ArrayList<List<Event>>();
 		long runtime = this.stopTime - this.startTime;
-		int totalSeconds = (int)runtime/1000;
+		int totalSeconds = (int)Math.ceil( runtime/1000 );
+		if( totalSeconds == 0 )
+			totalSeconds++;
+
 		// pre-populate all the lists, so we don't have to worry about checking for null
 		for( int i = 0; i < totalSeconds; i++ )
 			periods.add( new ArrayList<Event>() );
@@ -309,13 +312,17 @@ public class Storage
 			
 			// figure out when the event happened so we know which period to store it in
 			int timeOfEvent = (int)Math.floor( ((event.receivedTimestamp-this.startTime)/1000) );
-			if( timeOfEvent < 0 )
-				timeOfEvent = 0;
 
 			// something has a habit of tipping over the edge to the next second
 			// giving an index out of bounds by asking for index 19 e.g. in a 19 sized list
 			while( timeOfEvent >= periods.size() )
 				timeOfEvent--;
+
+			// make sure that for some stupid reason (such as a really quick execution) we're
+			// not below 0.
+			if( timeOfEvent < 0 )
+				timeOfEvent = 0;
+
 			List<Event> period = periods.get( timeOfEvent );
 			period.add( event );
 		}

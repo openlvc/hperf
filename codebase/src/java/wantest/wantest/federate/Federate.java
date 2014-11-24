@@ -403,12 +403,12 @@ public class Federate
 		////////////////////////////////////////////////////
 		// give some time over to process incoming events //
 		////////////////////////////////////////////////////
-		// stupid bug in Portico at the moment means min-time won't be
-		// respected in certain circumstances - work around it for now
-		long stoptime = System.currentTimeMillis() + configuration.getLoopWait();
-		while( System.currentTimeMillis() < stoptime )
-			rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
-
+		// Tick for at least the loopWait time, but no longer four times
+		// its value. This should give us enough time to process all the
+		// events in the queue, while giving the caller control over the
+		// block time when there is no work to do
+		double looptime = ((double)configuration.getLoopWait()) / 1000;
+		rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
 	}
 
 	/**

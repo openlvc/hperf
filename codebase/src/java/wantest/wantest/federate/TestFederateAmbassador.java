@@ -112,10 +112,10 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		long receivedTimestamp = System.currentTimeMillis();
 		byte[] timestampBytes = theAttributes.getValueReference(Handles.ATT_LAST_UPDATED).array();
 		long sentTimestamp = Long.parseLong( new String(timestampBytes) );
-		byte[] nameBytes = theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array();
 
 		// find the sending federate in our peer list
 		// this is the first update, get what we need
+		byte[] nameBytes = theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array();
 		String senderName = new String( theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array() );
 		TestFederate sender = storage.peers.get( senderName );
 		if( sender == null )
