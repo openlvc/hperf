@@ -40,7 +40,7 @@
 #        federation. If this is enabled, the FOM is logged to the INFO level (so make sure you
 #        have logging turned up high enough). By default this is disabled.
 #
-# portico.fom.print = enabled
+# portico.fom.print = disabled
 
 # (1.5) Logging by Handle/Name
 #        Making sense of log files can be difficult. To help make sense of this data, various bits
@@ -65,7 +65,7 @@
 #               logWithNames takes precedence.
 #
 # portico.logWithHandles=objectClass,attributeClass,interactionClass,parameterClass,space,dimension
-# portico.logWithNames=objectClass,attributeClass,objectInstance,federate
+# portico.logWithNames=objectInstance,federate
 
 
 # ================================
@@ -255,5 +255,29 @@
 #               requesting more messages to be sent, the actual number hitting the network is smaller.
 #
 # portico.jgroups.flow.credits = 1000000
+
+# =========================================
+# 5. WAN Connection Options
+# =========================================
+
+# (5.1) WAN Mode Enable/Disable
+#       If true, WAN mode will be enabled and the alternate JGroups stack will be used.
+#       This will disable UDP messages on the local network, instead sending them to the
+#       router at the location specified in further down in the configuration.
+#
+#       Default: false
+#
+#       Note: For this mode to function correctly, the WAN router must be running BEFORE
+#             the federate starts. If it is not, the federate may appear to start correctly,
+#             but it will not communicate with other federates.
+#       
+portico.wan.enabled = true
+
+# (5.2) Router Address/Port
+#       This setting specifies the address and port of the WAN router to use. Note that the
+#       syntax is "address[port]".
+#
+#       Default: 127.0.0.1[12001]
+portico.wan.router = 127.0.0.1[12001]
 
 
