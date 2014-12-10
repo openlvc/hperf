@@ -50,6 +50,7 @@ public class Configuration
 	private int loopWait;
 	private int objectCount; // number of objects we'll create
 	private int packetSize;  // the minimum size of each update in kb
+	private boolean validateData;
 	private List<String> peers;
 
 	private boolean printEventLog;
@@ -72,6 +73,7 @@ public class Configuration
 		this.loopWait = 1000;
 		this.objectCount = 20;
 		this.packetSize = 4096;
+		this.validateData = false;
 		this.peers = new ArrayList<String>();
 		
 		this.printEventLog = false;
@@ -149,6 +151,15 @@ public class Configuration
 		return this.packetSize;
 	}
 
+	/**
+	 * If this is set to true, for each message received, we should validate
+	 * the contents of the data to ensure it is as expected. 
+	 */
+	public boolean getValidateData()
+	{
+		return this.validateData;
+	}
+	
 	/**
 	 * A list of all the peer federates that will be part of this test run.
 	 * The returned list contains the name of the federates.
@@ -265,6 +276,13 @@ public class Configuration
 				}
 				
 				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--validate-data") )
+			{
+				this.validateData = true;
+				count++;
 				continue;
 			}
 

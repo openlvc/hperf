@@ -22,6 +22,7 @@ package wantest.federate;
 
 import org.apache.log4j.Logger;
 
+import wantest.config.Configuration;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateHandleSet;
 import hla.rti1516e.InteractionClassHandle;
@@ -44,14 +45,16 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	//----------------------------------------------------------
 	private Logger logger;
 	private Storage storage;
+	private Configuration configuration;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public TestFederateAmbassador( Storage storage )
+	public TestFederateAmbassador( Storage storage, Configuration configuration )
 	{
 		this.logger = Logger.getLogger( "wantest" );
 		this.storage = storage;
+		this.configuration = configuration;
 	}
 
 	//----------------------------------------------------------
@@ -128,6 +131,10 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		{
 			long dataSize = theAttributes.getValueReference(Handles.ATT_BYTE_BUFFER).remaining();
 
+			// validate the data blob received
+			if( configuration.getValidateData() )
+				validateData( theAttributes.getValueReference(Handles.ATT_BYTE_BUFFER).array() );
+
 			// create an event and link it into the master list and test object's list
 			Event event = Event.createReflection( theObject,
 			                                      sender,
@@ -168,6 +175,10 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 		
 		// get the value buffer we use to pad things out
 		long dataSize = theParameters.getValueReference(Handles.PRM_BYTE_BUFFER).remaining();
+		
+		// validate the data blob received
+		if( configuration.getValidateData() )
+			validateData( theParameters.getValueReference(Handles.PRM_BYTE_BUFFER).array() );
 
 		// store the event in the master list
 		Event event = Event.createInteraction( sender,
@@ -193,6 +204,31 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 			storage.readyToResign = true;
 	}
 
+	
+	///////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////// Utility Methods ///////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////
+	private void validateData( byte[] received )
+	{
+		if( received.length != configuration.getPacketSize() )
+		{
+			logger.error( "Received data buffer of incorrect size: expected="+
+			              configuration.getPacketSize()+", received="+received.length );
+		}
+
+		for( int i = 0; i < received.length; i++ )
+		{
+			byte expected = (byte)(i % 10);
+			if( received[i] != expected )
+			{
+				logger.error( "Invalid data received. Index ["+i+"] was ["+received[i]+
+				              "], expected ["+expected+"]" );
+				return;
+			}
+		}
+	}
+
+	
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

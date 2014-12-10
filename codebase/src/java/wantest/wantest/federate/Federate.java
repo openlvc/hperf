@@ -177,7 +177,7 @@ public class Federate
 		
 		// connect
 		logger.info( "Connecting..." );
-		fedamb = new TestFederateAmbassador( this.storage );
+		fedamb = new TestFederateAmbassador( this.storage, this.configuration );
 		rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
 
 		//////////////////////////////
