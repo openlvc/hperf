@@ -20,9 +20,13 @@
  */
 package wantest.latency;
 
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 import wantest.Storage;
+import wantest.TestFederate;
+import wantest.events.LatencyEvent;
 
 /**
  * This class takes the information that was gathered during the latency test, does a
@@ -55,7 +59,33 @@ public class LatencyReportGenerator
 
 	public void printReport()
 	{
+		// print the overall summary
+		logger.info( " =================================" );
+		logger.info( " =      Latency Test Report      =" );
+		logger.info( " =================================" );
+		logger.info( "" );
+
+		temp();
+	}
+
+	private void temp()
+	{
+		long cumulativeLatency = 0;
+		long totalResponses = 0;
+		for( LatencyEvent event : storage.getLatencyEvents() )
+		{
+			long sentTime = event.getSentTimestamp();
+			Map<TestFederate,Long> responses = event.getResponses();
+			for( Long receivedTime : responses.values() )
+			{
+				cumulativeLatency += (receivedTime-sentTime);
+				totalResponses++;
+			}
+		}
 		
+		long avg = cumulativeLatency / totalResponses;
+		
+		logger.info( "Avg Latency: "+avg+"ms ("+totalResponses+" responses)" );
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////

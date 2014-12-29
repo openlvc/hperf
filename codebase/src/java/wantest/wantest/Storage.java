@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import wantest.events.Event;
+import wantest.events.LatencyEvent;
 
 /**
  * This class is used to store event information that is accumulated during the
@@ -54,15 +55,12 @@ public class Storage
 	
 	// event information
 	private List<Event> throughputEvents;
-	private List<Event> latencyEvents;
+	private List<LatencyEvent> latencyEvents;
 	
 	// timers
 	private long throughputTestStartTime;
 	private long throughputTestStopTime;
 	
-	// latency test runtime variables
-	private int lastSerial;
-
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
@@ -71,7 +69,7 @@ public class Storage
 		this.peers = new HashMap<String,TestFederate>();
 		this.objects = new HashMap<ObjectInstanceHandle,TestObject>();
 		this.throughputEvents = new ArrayList<Event>();
-		this.latencyEvents = new ArrayList<Event>();
+		this.latencyEvents = new ArrayList<LatencyEvent>();
 		
 		// timers
 		this.throughputTestStartTime = 0;
@@ -123,12 +121,12 @@ public class Storage
 		return this.throughputEvents;
 	}
 	
-	public void addLatencyEvent( Event event )
+	public void addLatencyEvent( LatencyEvent event )
 	{
 		this.latencyEvents.add( event );
 	}
 	
-	public List<Event> getLatencyEvent()
+	public List<LatencyEvent> getLatencyEvents()
 	{
 		return this.latencyEvents;
 	}
@@ -154,19 +152,6 @@ public class Storage
 	public long getThroughputStartTime()
 	{
 		return this.throughputTestStartTime;
-	}
-
-	//////////////////////////
-	// Latency Test Methods //
-	//////////////////////////
-	public void setLastSerial( int serial )
-	{
-		this.lastSerial = serial;
-	}
-	
-	public int getLastSerial()
-	{
-		return this.lastSerial;
 	}
 
 	//----------------------------------------------------------

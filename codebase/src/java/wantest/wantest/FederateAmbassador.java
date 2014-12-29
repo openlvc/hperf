@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 import static wantest.Handles.*;
 import wantest.config.Configuration;
 import wantest.events.DiscoverEvent;
-import wantest.events.LatencyInteractionEvent;
+import wantest.events.LatencyEvent;
 import wantest.events.ReflectEvent;
 import wantest.events.ThroughputInteractionEvent;
 import wantest.federate.Utils;
@@ -61,11 +61,15 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public boolean startLatencyTest;
 	public boolean finishedLatencyTest;
 	
-	// time policy settings (used by the latency tests)
+	// latency test specific values
 	public boolean timeConstrained;
 	public boolean timeRegulating;
 	public long currentTime;
+	public int sendingSerial; // serial of event we are currently sending
+	public int requestedSerial; // serial of event we need to response to
+	public LatencyEvent currentLatencyEvent;
 
+	
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
@@ -81,10 +85,13 @@ public class FederateAmbassador extends NullFederateAmbassador
 		this.startLatencyTest = false;
 		this.finishedLatencyTest = false;
 		
-		// time policy settings
+		// latency test specific values
 		this.timeConstrained = false;
 		this.timeRegulating = false;
 		this.currentTime = 0;
+		this.sendingSerial = -1;
+		this.requestedSerial = -1;
+		this.currentLatencyEvent = null;
 	}
 
 	//----------------------------------------------------------
@@ -247,27 +254,38 @@ public class FederateAmbassador extends NullFederateAmbassador
 	{
 		// stop the clock!
 		long receivedTimestamp = System.currentTimeMillis();
-
-		// make sure we have enough data
-		int payloadSize = parameters.getValueReference(PC_LATENCY_PAYLOAD).remaining();
-		if( configuration.getValidateData() )
+		
+		// If this is in response to one of our requests, the serial will match
+		// the one we have stored. In this case, record the received timestamp
+		// against the test federate with the event
+		int serial = Utils.bytesToInt( parameters.getValueReference(PC_LATENCY_SERIAL).array() );
+		if( serial == this.sendingSerial )
 		{
-			// validate the data only if we're told to - will hurt latency!
-			Utils.verifyPayload( parameters.getValueReference(PC_LATENCY_PAYLOAD).array(),
-			                     configuration.getPacketSize(),
-			                     logger );
+			//////////////////////////
+			// Response to our Ping //
+			//////////////////////////
+			// find the TestFederate for the sender & record the timestamp
+			String sender = new String( parameters.getValueReference(PC_LATENCY_SENDER).array() );
+			TestFederate federate = storage.getPeer( sender );
+			this.currentLatencyEvent.addResponse( federate, receivedTimestamp );
+
+			// validate the payload data if we've been asked to
+			if( configuration.getValidateData() )
+			{
+				// validate the data only if we're told to - will hurt latency!
+				Utils.verifyPayload( parameters.getValueReference(PC_LATENCY_PAYLOAD).array(),
+				                     configuration.getPacketSize(),
+				                     logger );
+			}
 		}
-		
-		// get the sender and serial
-		byte serial = parameters.getValueReference(PC_LATENCY_SERIAL).array()[0];
-		String sender = new String( parameters.getValueReference(PC_LATENCY_SENDER).array() );
-		
-		// store the event information
-		LatencyInteractionEvent event = new LatencyInteractionEvent( serial,
-		                                                             storage.getPeer(sender),
-		                                                             receivedTimestamp,
-		                                                             payloadSize );
-		storage.addLatencyEvent( event );
+		else
+		{
+			///////////////////////////
+			// Request for Ping Back //
+			///////////////////////////
+			// this is an initial ping from someone else - record it so we can respond
+			this.requestedSerial = serial;
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////

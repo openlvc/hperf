@@ -203,6 +203,7 @@ public class Federate
 		////////////////////////
 		// because REASONS, le sigh
 		rtiamb.enableCallbacks();
+		rtiamb.enableAsynchronousDelivery();
 	}
 
 	/**

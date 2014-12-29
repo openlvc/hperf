@@ -20,9 +20,12 @@
  */
 package wantest.events;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import wantest.TestFederate;
 
-public class LatencyInteractionEvent implements Event
+public class LatencyEvent
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,52 +34,56 @@ public class LatencyInteractionEvent implements Event
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
-	private byte serial;
-	private TestFederate sender;
-	private long receivedTimestamp;
+	private int serial;
+	private long sentTimestamp;
 	private int payloadSize;
+	private int responseCount;
+	private Map<TestFederate,Long> responses;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public LatencyInteractionEvent( byte serial,
-	                                TestFederate sender,
-	                                long receivedTimestamp,
-	                                int payloadSize )
+	public LatencyEvent( int serial, long sentTimestamp, int responseCount, int payloadSize )
 	{
 		this.serial = serial;
-		this.sender = sender;
-		this.receivedTimestamp = receivedTimestamp;
+		this.sentTimestamp = sentTimestamp;
+		this.responseCount = responseCount;
 		this.payloadSize = payloadSize;
+		this.responses = new HashMap<TestFederate,Long>();
 	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 
-	public Type getType()
-	{
-		return Type.LatencyInteraction;
-	}
-
-	public byte getSerial()
+	public int getSerial()
 	{
 		return this.serial;
 	}
 	
-	public TestFederate getSender()
+	public long getSentTimestamp()
 	{
-		return this.sender;
-	}
-	
-	public long getReceivedTimestamp()
-	{
-		return this.receivedTimestamp;
+		return this.sentTimestamp;
 	}
 
 	public int getPayloadSize()
 	{
 		return this.payloadSize;
+	}
+	
+	public void addResponse( TestFederate sender, long timestamp )
+	{
+		this.responses.put( sender, timestamp );
+	}
+	
+	public boolean hasReceivedAllResponses()
+	{
+		return responses.size() == responseCount;
+	}
+	
+	public Map<TestFederate,Long> getResponses()
+	{
+		return this.responses;
 	}
 
 	//----------------------------------------------------------
