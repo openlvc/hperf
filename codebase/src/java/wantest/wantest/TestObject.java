@@ -20,9 +20,13 @@
  */
 package wantest;
 
-import wantest.Federate;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Main
+import wantest.events.Event;
+import hla.rti1516e.ObjectInstanceHandle;
+
+public class TestObject
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,21 +35,67 @@ public class Main
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
+	private ObjectInstanceHandle handle;
+	private String objectName;
+	private TestFederate creator;
+	private long createTime;
+	
+	private List<Event> events;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
+	public TestObject( ObjectInstanceHandle handle, String objectName )
+	{
+		this.handle = handle;
+		this.objectName = objectName;
+		this.creator = null;
+		this.createTime = System.currentTimeMillis();
+		this.events = new ArrayList<Event>();
+	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+
+	public ObjectInstanceHandle getHandle()
+	{
+		return this.handle;
+	}
+
+	public String getName()
+	{
+		return this.objectName;
+	}
 	
+	
+	public TestFederate getCreator()
+	{
+		return this.creator;
+	}
+	
+	public void setCreator( TestFederate federate )
+	{
+		this.creator = federate;
+		federate.addObject( this );
+	}
+
+	public long getCreateTime()
+	{
+		return this.createTime;
+	}
+	
+	public void addEvent( Event event )
+	{
+		this.events.add( event );
+	}
+	
+	public boolean isValid()
+	{
+		return this.creator != null;
+	}
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate(args).execute();
-	}
 }

@@ -18,11 +18,13 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest;
+package wantest.events;
 
-import wantest.Federate;
+import hla.rti1516e.ObjectInstanceHandle;
+import wantest.TestFederate;
+import wantest.TestObject;
 
-public class Main
+public class DiscoverEvent implements Event
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,21 +33,53 @@ public class Main
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
+	private TestObject testObject;
+	private long receivedTimestamp;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
+	public DiscoverEvent( TestObject testObject, long receivedTimestamp )
+	{
+		this.testObject = testObject;
+		this.receivedTimestamp = receivedTimestamp;
+	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+
+	public Type getType()
+	{
+		return Type.Discover;
+	}
+
+	public TestObject getObject()
+	{
+		return this.testObject;
+	}
+
+	public ObjectInstanceHandle getObjectHandle()
+	{
+		return this.testObject.getHandle();
+	}
+
+	public long getReceivedTimestamp()
+	{
+		return this.receivedTimestamp;
+	}
 	
+	public TestFederate getSender()
+	{
+		return null;
+	}
+	
+	public int getPayloadSize()
+	{
+		return 0;
+	}
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate(args).execute();
-	}
 }

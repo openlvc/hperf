@@ -138,10 +138,8 @@
 		</copy>
 
 		<!-- chmod anything in a bin directory -->
-		<chmod dir="${sandbox.dir}" perm="777" includes="bin/**/*"/>
+		<chmod dir="${sandbox.dir}" perm="777" includes="bin/**/*,**/*.sh"/>
 
-		<!-- More stuff specific to MYPROJECT -->
-		
 		<!-- Run platform specific fixes such as fixing crlf for Windows bound files! -->
 		
 	</target>

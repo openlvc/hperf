@@ -18,11 +18,16 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest;
+package wantest.latency;
 
-import wantest.Federate;
+import org.apache.log4j.Logger;
 
-public class Main
+import hla.rti1516e.RTIambassador;
+import wantest.FederateAmbassador;
+import wantest.Storage;
+import wantest.config.Configuration;
+
+public class LatencyDriver
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,6 +36,11 @@ public class Main
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
+	private Logger logger;
+	private Configuration configuration;
+	private RTIambassador rtiamb;
+	private FederateAmbassador fedamb;
+	private Storage storage;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -39,13 +49,36 @@ public class Main
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+
+	public void execute( Configuration configuration,
+	                     RTIambassador rtiamb,
+	                     FederateAmbassador fedamb,
+	                     Storage storage )
+	{
+		logger = Logger.getLogger( "wantest" );
+		this.configuration = configuration;
+		this.rtiamb = rtiamb;
+		this.fedamb = fedamb;
+		this.storage = storage;
+
+		logger.info( " ================================" );
+		logger.info( " =     Running Latency Test     =" );
+		logger.info( " ================================" );
+
+		logger.info( "Latency Test Finished" );
+		logger.info( "" );
+	}
+
+	public void printReport()
+	{
+		
+	}
 	
+	////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate(args).execute();
-	}
 }

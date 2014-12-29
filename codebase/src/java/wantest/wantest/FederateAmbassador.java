@@ -18,13 +18,17 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest.federate;
+package wantest;
 
 import org.apache.log4j.Logger;
 
-import wantest.TestFederate;
-import wantest.TestObject;
+import static wantest.Handles.*;
 import wantest.config.Configuration;
+import wantest.events.DiscoverEvent;
+import wantest.events.LatencyInteractionEvent;
+import wantest.events.ReflectEvent;
+import wantest.events.ThroughputInteractionEvent;
+import wantest.federate.Utils;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateHandleSet;
 import hla.rti1516e.InteractionClassHandle;
@@ -36,7 +40,7 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 
-public class TestFederateAmbassador extends NullFederateAmbassador
+public class FederateAmbassador extends NullFederateAmbassador
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -46,17 +50,29 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
 	private Logger logger;
-	private Storage storage;
 	private Configuration configuration;
+	private Storage storage;
+	
+	// sync point information
+	public boolean startThroughputTest;
+	public boolean finishedThroughputTest;
+	public boolean startLatencyTest;
+	public boolean finishedLatencyTest;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public TestFederateAmbassador( Storage storage, Configuration configuration )
+	public FederateAmbassador( Configuration configuration, Storage storage )
 	{
 		this.logger = Logger.getLogger( "wantest" );
-		this.storage = storage;
 		this.configuration = configuration;
+		this.storage = storage;
+		
+		// sync points
+		this.startThroughputTest = false;
+		this.finishedThroughputTest = false;
+		this.startLatencyTest = false;
+		this.finishedLatencyTest = false;
 	}
 
 	//----------------------------------------------------------
@@ -72,12 +88,15 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	                                    String objectName )
 		throws FederateInternalError
 	{
+		// record the time that we received the event
+		long receivedTimestamp = System.currentTimeMillis();
+
 		if( theObjectClass.equals(Handles.OC_TEST_FEDERATE) )
 		{
 			//
 			// Class: HLAobjectRoot.TestFederate
 			//
-			storage.peers.put( objectName, new TestFederate(objectName) );
+			storage.addPeer( new TestFederate(objectName) );
 		}
 		else if( theObjectClass.equals(Handles.OC_TEST_OBJECT) )
 		{
@@ -88,10 +107,10 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 			
 			// attach an event record to both the global time list and the
 			// object-specific list inside each object
-			Event event = Event.createDiscover( theObject, testObject.getCreateTime() );
-			storage.eventlist.add( event );
-//			testObject.addEvent( event );
-			storage.objects.put( theObject, testObject );
+			DiscoverEvent event = new DiscoverEvent( testObject, receivedTimestamp );
+			storage.addThroughputEvent( event );
+			storage.addObject( theObject, testObject );
+			testObject.addEvent( event );
 		}
 		
 		logger.debug( "   discoverObjectInstance(): class="+theObjectClass+
@@ -109,48 +128,47 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	    throws FederateInternalError
 	{
 		// find the object this is in reference to
-		TestObject testObject = storage.objects.get( theObject );
+		TestObject testObject = storage.getObject( theObject );
 		if( testObject == null )
 			return; // not something we want to bother with
 		
-		// deserialize the attributes
-		long receivedTimestamp = System.currentTimeMillis();
-		byte[] timestampBytes = theAttributes.getValueReference(Handles.ATT_LAST_UPDATED).array();
-		long sentTimestamp = Long.parseLong( new String(timestampBytes) );
-
-		// find the sending federate in our peer list
-		// this is the first update, get what we need
-		byte[] nameBytes = theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array();
-		String senderName = new String( theAttributes.getValueReference(Handles.ATT_CREATOR_NAME).array() );
-		TestFederate sender = storage.peers.get( senderName );
-		if( sender == null )
-			logger.error( "Received an update from an unknown federate (apparently)" );
-		
-		
-		// only record the event if the object is valid
-		// before then we send an initial update, and we don't want to count that
-		if( testObject.isValid() )
+		// if the update came with a creator name, then it is the initial update
+		if( theAttributes.containsKey(AC_CREATOR) )
 		{
-			long dataSize = theAttributes.getValueReference(Handles.ATT_BYTE_BUFFER).remaining();
-
-			// validate the data blob received
-			if( configuration.getValidateData() )
-				validateData( theAttributes.getValueReference(Handles.ATT_BYTE_BUFFER).array() );
-
-			// create an event and link it into the master list and test object's list
-			Event event = Event.createReflection( theObject,
-			                                      sender,
-			                                      sentTimestamp,
-			                                      receivedTimestamp,
-			                                      dataSize+timestampBytes.length+nameBytes.length );
-			
-			storage.eventlist.add( event );
-//			testObject.addEvent( event );
+			////////////////////
+			// Initial Update //
+			////////////////////
+			String senderName = new String( theAttributes.getValueReference(AC_CREATOR).array() );
+			TestFederate sender = storage.getPeer( senderName );
+			if( sender == null )
+				logger.error( "Received initial update from an undiscovered federate" );
+			else
+				testObject.setCreator( sender );
 		}
 		else
 		{
-			if( sender != null )
-				testObject.setCreator( sender );
+			/////////////////////
+			// Regular Reflect //
+			/////////////////////
+			// Update does not contain a creator, which means it is a regular update.
+			// Record the details of the event
+			long receivedTimestamp = System.currentTimeMillis();
+			long sentTimestamp = Utils.bytesToLong( theAttributes.getValueReference(AC_LAST_UPDATED).array() );
+			byte[] payload = theAttributes.getValueReference(AC_PAYLOAD).array();
+
+			// validate the data blob received
+			if( configuration.getValidateData() )
+				Utils.verifyPayload( payload, configuration.getPacketSize(), logger );
+
+			// create an event and link it into the master list and test object's list
+			ReflectEvent event = new ReflectEvent( testObject.getCreator(),
+			                                       testObject,
+			                                       sentTimestamp,
+			                                       receivedTimestamp,
+			                                       payload.length );
+
+			storage.addThroughputEvent( event );
+			testObject.addEvent( event );
 		}
 	}
 
@@ -165,31 +183,81 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	                                SupplementalReceiveInfo receiveInfo )
 	    throws FederateInternalError
 	{
-		// get the send timestamp
+		if( interactionClass.equals(IC_LATENCY) )
+			handleLatencyInteraction( theParameters );
+		else if( interactionClass.equals(IC_THROUGHPUT) )
+			handleThroughputInteraction( theParameters );
+	}
+
+	/**
+	 * Handle received throughput events:
+	 * 
+	 *  (class ThroughputInteraction reliable timestamp
+	 *    (parameter sender)
+	 *    (parameter payload)
+	 *  )
+	 * 
+	 * Creates and stores the event information.
+	 */
+	private void handleThroughputInteraction( ParameterHandleValueMap parameters )
+	{
+		// get the timestamp
 		long receivedTimestamp = System.currentTimeMillis();
-		byte[] timestampBytes = theParameters.getValueReference(Handles.PRM_SEND_TIME).array();
-		long sentTimestamp = Long.parseLong( new String(timestampBytes) );
-		
-		// get the sending federate from our peer list
-		byte[] nameBytes = theParameters.getValueReference(Handles.PRM_SENDING_FED).array();
-		String senderName = new String( nameBytes );
-		TestFederate sender = storage.peers.get( senderName );
-		
-		// get the value buffer we use to pad things out
-		long dataSize = theParameters.getValueReference(Handles.PRM_BYTE_BUFFER).remaining();
-		
+
 		// validate the data blob received
+		byte[] payload = parameters.getValueReference(PC_THROUGHPUT_PAYLOAD).array();
 		if( configuration.getValidateData() )
-			validateData( theParameters.getValueReference(Handles.PRM_BYTE_BUFFER).array() );
+			Utils.verifyPayload( payload, configuration.getPacketSize(), logger );
+
+		// find the sending federate in our list
+		byte[] temp = parameters.getValueReference(PC_THROUGHPUT_SENDER).array();
+		String senderName = new String( temp );
+		TestFederate sender = storage.getPeer( senderName );
 
 		// store the event in the master list
-		Event event = Event.createInteraction( sender,
-		                                       sentTimestamp,
-		                                       receivedTimestamp,
-		                                       dataSize+timestampBytes.length+nameBytes.length);
-		storage.eventlist.add( event );
+		ThroughputInteractionEvent event = new ThroughputInteractionEvent( sender,
+		                                                                   payload.length,
+		                                                                   receivedTimestamp );
+		storage.addThroughputEvent( event );
 	}
-	
+
+	/**
+	 * Handle a received latency event:
+	 * 
+	 *   (class LatencyInteraction reliable timestamp
+	 *     (parameter serial)
+	 *     (parameter sender)
+	 *     (parameter payload)
+	 *   )
+	 * 
+	 */
+	private void handleLatencyInteraction( ParameterHandleValueMap parameters )
+	{
+		// stop the clock!
+		long receivedTimestamp = System.currentTimeMillis();
+
+		// make sure we have enough data
+		int payloadSize = parameters.getValueReference(PC_LATENCY_PAYLOAD).remaining();
+		if( configuration.getValidateData() )
+		{
+			// validate the data only if we're told to - will hurt latency!
+			Utils.verifyPayload( parameters.getValueReference(PC_LATENCY_PAYLOAD).array(),
+			                     configuration.getPacketSize(),
+			                     logger );
+		}
+		
+		// get the sender and serial
+		byte serial = parameters.getValueReference(PC_LATENCY_SERIAL).array()[0];
+		String sender = new String( parameters.getValueReference(PC_LATENCY_SENDER).array() );
+		
+		// store the event information
+		LatencyInteractionEvent event = new LatencyInteractionEvent( serial,
+		                                                             storage.getPeer(sender),
+		                                                             receivedTimestamp,
+		                                                             payloadSize );
+		storage.addLatencyEvent( event );
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////// Exit Synchronization Point Handling /////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////
@@ -202,35 +270,16 @@ public class TestFederateAmbassador extends NullFederateAmbassador
 	public void federationSynchronized( String label, FederateHandleSet failedSet )
 		throws FederateInternalError
 	{
-		if( label.equals("READY_TO_RESIGN") )
-			storage.readyToResign = true;
+		if( label.equals("START_THROUGHPUT_TEST") )
+			this.startThroughputTest = true;
+		else if( label.equals("FINISH_THROUGHPUT_TEST") )
+			this.finishedThroughputTest = true;
+		else if( label.equals("START_LATENCY_TEST") )
+			this.startLatencyTest = true;
+		else if( label.equals("FINISH_LATENCY_TEST") )
+			this.finishedLatencyTest = true;
 	}
 
-	
-	///////////////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////////// Utility Methods ///////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////
-	private void validateData( byte[] received )
-	{
-		if( received.length != configuration.getPacketSize() )
-		{
-			logger.error( "Received data buffer of incorrect size: expected="+
-			              configuration.getPacketSize()+", received="+received.length );
-		}
-
-		for( int i = 0; i < received.length; i++ )
-		{
-			byte expected = (byte)(i % 10);
-			if( received[i] != expected )
-			{
-				logger.error( "Invalid data received. Index ["+i+"] was ["+received[i]+
-				              "], expected ["+expected+"]" );
-				return;
-			}
-		}
-	}
-
-	
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

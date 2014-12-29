@@ -53,6 +53,9 @@ public class Configuration
 	private boolean validateData;
 	private List<String> peers;
 
+	private boolean runThroughputTest;
+	private boolean runLatencyTest;
+
 	private boolean printEventLog;
 	private String csvFile;
 
@@ -75,6 +78,10 @@ public class Configuration
 		this.packetSize = 4096;
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
+
+		// default to run both latency and throughput tests unless they opt-out
+		this.runThroughputTest = true;
+		this.runLatencyTest = true;
 		
 		this.printEventLog = false;
 		this.csvFile = null;
@@ -168,7 +175,17 @@ public class Configuration
 	{
 		return this.peers;
 	}
+
+	public boolean getRunThroughputTest()
+	{
+		return this.runThroughputTest;
+	}
 	
+	public boolean getRunLatencyTest()
+	{
+		return this.runLatencyTest;
+	}
+
 	public boolean getPrintEventLog()
 	{
 		return this.printEventLog;
@@ -302,6 +319,20 @@ public class Configuration
 					peers.add( tokenizer.nextToken() );
 				
 				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--no-throughput-test") )
+			{
+				this.runThroughputTest = false;
+				count++;
+				continue;
+			}
+			
+			if( argument.startsWith("--no-latency-test") )
+			{
+				this.runLatencyTest = false;
+				count++;
 				continue;
 			}
 			

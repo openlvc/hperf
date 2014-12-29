@@ -18,11 +18,13 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest;
+package wantest.events;
 
-import wantest.Federate;
+import hla.rti1516e.ObjectInstanceHandle;
+import wantest.TestFederate;
+import wantest.TestObject;
 
-public class Main
+public class ReflectEvent implements Event
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,21 +33,68 @@ public class Main
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
+	private TestFederate sender;
+	private TestObject testObject;
+	private long sentTimestamp;
+	private long receivedTimestamp;
+	private int payloadSize;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
+	public ReflectEvent( TestFederate sender,
+	                     TestObject testObject,
+	                     long sentTimestamp,
+	                     long receivedTimestamp,
+	                     int payloadSize )
+	{
+		this.sender = sender;
+		this.testObject = testObject;
+		this.receivedTimestamp = receivedTimestamp;
+		this.sentTimestamp = sentTimestamp;
+		this.payloadSize = payloadSize;
+	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+
+	public Type getType()
+	{
+		return Type.Reflect;
+	}
+
+	public TestFederate getSender()
+	{
+		return this.sender;
+	}
+
+	public TestObject getObject()
+	{
+		return this.testObject;
+	}
 	
+	public ObjectInstanceHandle getObjectHandle()
+	{
+		return this.testObject.getHandle();
+	}
+	
+	public long getReceivedTimestamp()
+	{
+		return this.receivedTimestamp;
+	}
+	
+	public long getSentTimestamp()
+	{
+		return this.sentTimestamp;
+	}
+	
+	public int getPayloadSize()
+	{
+		return this.payloadSize;
+	}
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate(args).execute();
-	}
 }

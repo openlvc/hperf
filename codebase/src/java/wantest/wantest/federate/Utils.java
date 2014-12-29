@@ -20,6 +20,8 @@
  */
 package wantest.federate;
 
+import org.apache.log4j.Logger;
+
 public class Utils
 {
 	//----------------------------------------------------------
@@ -41,6 +43,66 @@ public class Utils
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
+	/**
+	 * Create a byte[] of the specified size with a predictable set of contents.
+	 * This is used to so that we can have some measure of control over the size
+	 * of attribute reflections or interactions when we send them.
+	 * 
+	 * Buffer contents are a cyclic count from 0-9. For example, a 13-byte buffer
+	 * would return: `[0,1,2,3,4,5,6,7,8,9,0,1,2]`.
+	 * 
+	 * @param sizeInBytes The size to make the buffer
+	 * @return Initialized buffer of the specified size containing a cylic set of
+	 *         numbers from 0-9.
+	 */
+	public static byte[] generatePayload( int sizeInBytes )
+	{
+		// Stuff a basic buffer full of some data we can verify on the other side
+		// The size of this is set in configuration and we use it to ensure that
+		// all messages are of at least a certain size. In reality, the size is a
+		// little bigger as we send some additional attributes/parameters, but we
+		// can't have it all with perfectly sized updates now can we!
+		byte[] payload = new byte[sizeInBytes];
+		for( int i = 0; i < sizeInBytes; i++ )
+			payload[i] = (byte)(i % 10);
+
+		return payload;
+	}
+
+	/**
+	 * Validates the given payload as being consistent with the scheme that we use
+	 * to generate payloads in {@link #generatePayload(int)}. This is a cyclic list
+	 * of numbers, from 0-9, repeating until the appropriate buffer size is filled.
+	 * If there is a problem, we print this to the provided logger.
+	 * 
+	 * @param received The payload we received
+	 * @param expectedSize How big we expect the array to be
+	 * @param logger The logger to print our results to
+	 */
+	public static void verifyPayload( byte[] received, int expectedSize, Logger logger )
+	{
+		if( received.length != expectedSize )
+		{
+			logger.error( "Received data buffer of incorrect size: expected="+
+			              expectedSize+", received="+received.length );
+		}
+
+		for( int i = 0; i < received.length; i++ )
+		{
+			byte expected = (byte)(i % 10);
+			if( received[i] != expected )
+			{
+				logger.error( "Invalid data received. Index ["+i+"] was ["+received[i]+
+				              "], expected ["+expected+"]" );
+				return;
+			}
+		}
+	}
+	
+	/**
+	 * Convert the given size (in bytes) to a more human readable string. Returned values
+	 * will be in the form: "16B", "16KB", "16MB", "16GB".
+	 */
 	public static String getSizeString( long size )
 	{
 		double totalkb = size / 1024;
@@ -54,5 +116,98 @@ public class Utils
 			return totalkb+"KB";
 		else
 			return size+"B";
+	}
+	
+	///////////////////////////////////////////////////////////////
+	// Int Conversion Methods                                    //
+	///////////////////////////////////////////////////////////////
+	public static byte[] intToBytes( int value )
+	{
+		return new byte[]
+		{
+		 	(byte)(value >>> 24),
+		 	(byte)(value >>> 16),
+		 	(byte)(value >>> 8),
+		 	(byte)(value)
+		};
+	}
+
+	public static void intToBytes( int value, byte[] buffer, int offset )
+	{
+		buffer[offset]   = (byte)( value >>> 24 );
+		buffer[offset+1] = (byte)( value >>> 16 );
+		buffer[offset+2] = (byte)( value >>> 8  );
+		buffer[offset+3] = (byte)(value);
+	}
+
+	
+	public static int bytesToInt( byte[] bytes )
+	{
+		return ((bytes[0] & 0xff) << 24) |
+		       ((bytes[1] & 0xff) << 16) |
+		       ((bytes[2] & 0xff) << 8 ) |
+		        (bytes[3] & 0xff);
+	}
+
+	public static int bytesToInt( byte[] buffer, int offset )
+	{
+		return ((buffer[offset]   & 0xff) << 24) |
+		       ((buffer[offset+1] & 0xff) << 16) |
+		       ((buffer[offset+2] & 0xff) << 8 ) |
+		        (buffer[offset+3] & 0xff);
+	}
+
+	///////////////////////////////////////////////////////////////
+	// Long Conversion Methods                                   //
+	///////////////////////////////////////////////////////////////
+	public static byte[] longToBytes( long value )
+	{
+		return new byte[]
+		{
+		 	(byte)(value >>> 56),
+		 	(byte)(value >>> 48),
+		 	(byte)(value >>> 40),
+		 	(byte)(value >>> 32),
+		 	(byte)(value >>> 24),
+		 	(byte)(value >>> 16),
+		 	(byte)(value >>> 8),
+		 	(byte)(value)
+		};
+	}
+
+	public static void longToBytes( long value, byte[] buffer, int offset )
+	{
+		buffer[offset]   = (byte)( value >>> 56 );
+		buffer[offset+1] = (byte)( value >>> 48 );
+		buffer[offset+2] = (byte)( value >>> 40 );
+		buffer[offset+3] = (byte)( value >>> 32 );
+		buffer[offset+4] = (byte)( value >>> 24 );
+		buffer[offset+5] = (byte)( value >>> 16 );
+		buffer[offset+6] = (byte)( value >>> 8  );
+		buffer[offset+7] = (byte)(value);
+	}
+
+	public static long bytesToLong( byte[] bytes )
+	{
+		return ((long)(bytes[0] & 0xff) << 56) |
+		       ((long)(bytes[1] & 0xff) << 48) |
+		       ((long)(bytes[2] & 0xff) << 40) |
+		       ((long)(bytes[3] & 0xff) << 32) |
+		       ((long)(bytes[4] & 0xff) << 24) |
+		       ((long)(bytes[5] & 0xff) << 16) |
+		       ((long)(bytes[6] & 0xff) << 8 ) |
+		       ((long) bytes[7] & 0xff);
+	}
+
+	public static long bytesToLong( byte[] buffer, int offset )
+	{
+		return ((long)(buffer[offset]   & 0xff) << 56) |
+		       ((long)(buffer[offset+1] & 0xff) << 48) |
+		       ((long)(buffer[offset+2] & 0xff) << 40) |
+		       ((long)(buffer[offset+3] & 0xff) << 32) |
+		       ((long)(buffer[offset+4] & 0xff) << 24) |
+		       ((long)(buffer[offset+5] & 0xff) << 16) |
+		       ((long)(buffer[offset+6] & 0xff) << 8 ) |
+		        ((long)buffer[offset+7] & 0xff);
 	}
 }

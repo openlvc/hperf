@@ -18,14 +18,17 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest.federate;
+package wantest.latency;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.log4j.Logger;
 
-import hla.rti1516e.ObjectInstanceHandle;
+import wantest.Storage;
 
-public class TestObject
+/**
+ * This class takes the information that was gathered during the latency test, does a
+ * bit of aggregation and prints a report on the activities.
+ */
+public class LatencyReportGenerator
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -34,65 +37,30 @@ public class TestObject
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
-	private ObjectInstanceHandle handle;
-	private String objectName;
-	private TestFederate creator;
-	private long createTimestamp;
-	
-	private List<Event> events;
+	private Logger logger;
+	private Storage storage;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public TestObject( ObjectInstanceHandle handle, String objectName )
+	public LatencyReportGenerator( Storage storage )
 	{
-		this.handle = handle;
-		this.objectName = objectName;
-		this.creator = null;
-		this.createTimestamp = System.currentTimeMillis();
-		this.events = new ArrayList<Event>();
+		this.logger = Logger.getLogger( "wantest" );
+		this.storage = storage;
 	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 
-	public ObjectInstanceHandle getHandle()
+	public void printReport()
 	{
-		return this.handle;
-	}
-
-	public String getName()
-	{
-		return this.objectName;
+		
 	}
 	
-	
-	public TestFederate getCreator()
-	{
-		return this.creator;
-	}
-	
-	public void setCreator( TestFederate federate )
-	{
-		this.creator = federate;
-		federate.addObject( this );
-	}
-
-	public long getCreateTime()
-	{
-		return this.createTimestamp;
-	}
-	
-	public void addEvent( Event event )
-	{
-		this.events.add( event );
-	}
-	
-	public boolean isValid()
-	{
-		return this.creator != null;
-	}
+	////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS

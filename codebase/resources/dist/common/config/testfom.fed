@@ -7,36 +7,32 @@
 (FED
   (Federation wantest)
   (FEDversion v1.3)
-  (spaces
-    (space TestSpace
-      (dimension TestDimension)
-    )
-    (space OtherSpace
-      (dimension OtherDimension)
-    )
-  )
   ;; This is a comment, blah, blah
   (objects 
     (class ObjectRoot 
       (attribute privilegeToDelete reliable timestamp)
       (class RTIprivate)
-      (class TestObject
-        (attribute lastUpdated      reliable timestamp)
-        (attribute creatingFederate reliable timestamp)
-        (attribute byteBuffer       reliable timestamp) ;; we use this to get variable send sizes
-      )
-      (class TestFederate
+      (class TestFederate                               ;; each federate in the sim registers one
         (attribute federateName reliable timestamp)
+      )
+      (class TestObject
+        (attribute lastUpdated  reliable timestamp)
+        (attribute creator      reliable timestamp)
+        (attribute payload      reliable timestamp) ;; we use this to get variable send sizes
       )
     )
   )
   (interactions 
     (class InteractionRoot reliable timestamp
       (class RTIprivate reliable timestamp)
-      (class TestInteraction reliable timestamp
-        (parameter sendTime)
-        (parameter sendingFederate)
-        (parameter byteBuffer) ;; we use this to get variable send sizes
+      (class ThroughputInteraction reliable timestamp
+        (parameter sender)
+        (parameter payload)
+      )
+      (class LatencyInteraction reliable timestamp
+        (parameter serial)   ;; byte
+        (parameter sender)
+        (parameter payload)
       )
     )
   )

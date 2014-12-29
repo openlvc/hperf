@@ -271,13 +271,13 @@
 #             the federate starts. If it is not, the federate may appear to start correctly,
 #             but it will not communicate with other federates.
 #       
-portico.wan.enabled = true
+# portico.wan.enabled = true
 
 # (5.2) Router Address/Port
 #       This setting specifies the address and port of the WAN router to use. Note that the
 #       syntax is "address[port]".
 #
 #       Default: 127.0.0.1[12001]
-portico.wan.router = 127.0.0.1[12001]
+# portico.wan.router = 127.0.0.1[12001]
 
 

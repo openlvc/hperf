@@ -18,15 +18,11 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest.federate;
+package wantest.events;
 
-import hla.rti1516e.ObjectInstanceHandle;
+import wantest.TestFederate;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-public class TestFederate
+public class LatencyInteractionEvent implements Event
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -35,60 +31,52 @@ public class TestFederate
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
-	private String federateName;
-	private Map<String,TestObject> objects;
+	private byte serial;
+	private TestFederate sender;
+	private long receivedTimestamp;
+	private int payloadSize;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public TestFederate( String federateName )
+	public LatencyInteractionEvent( byte serial,
+	                                TestFederate sender,
+	                                long receivedTimestamp,
+	                                int payloadSize )
 	{
-		this.federateName = federateName;
-		this.objects = new HashMap<String,TestObject>();
+		this.serial = serial;
+		this.sender = sender;
+		this.receivedTimestamp = receivedTimestamp;
+		this.payloadSize = payloadSize;
 	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
 
-	public void addObject( TestObject object )
+	public Type getType()
 	{
-		this.objects.put( object.getName(), object );
-	}
-	
-	public boolean containsObject( ObjectInstanceHandle handle )
-	{
-		for( TestObject testObject : objects.values() )
-		{
-			if( testObject.getHandle().equals(handle) )
-				return true;
-		}
-		
-		return false;
-	}
-	
-	////////////////////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////
-	
-	public String getFederateName()
-	{
-		return this.federateName;
+		return Type.LatencyInteraction;
 	}
 
-	public Collection<TestObject> getObjects()
+	public byte getSerial()
 	{
-		return this.objects.values();
+		return this.serial;
 	}
 	
-	public int getObjectCount()
+	public TestFederate getSender()
 	{
-		return this.objects.size();
+		return this.sender;
+	}
+	
+	public long getReceivedTimestamp()
+	{
+		return this.receivedTimestamp;
 	}
 
-	public String toString()
+	public int getPayloadSize()
 	{
-		return this.federateName;
+		return this.payloadSize;
 	}
 
 	//----------------------------------------------------------

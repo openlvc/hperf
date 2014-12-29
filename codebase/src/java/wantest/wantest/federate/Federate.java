@@ -21,6 +21,8 @@
 package wantest.federate;
 
 import static wantest.federate.Handles.*;
+import wantest.TestFederate;
+import wantest.TestObject;
 import wantest.config.Configuration;
 import hla.rti1516e.AttributeHandleSet;
 import hla.rti1516e.AttributeHandleValueMap;

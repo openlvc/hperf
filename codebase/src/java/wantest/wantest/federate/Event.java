@@ -20,6 +20,8 @@
  */
 package wantest.federate;
 
+import wantest.TestFederate;
+import wantest.TestObject;
 import hla.rti1516e.ObjectInstanceHandle;
 
 /**

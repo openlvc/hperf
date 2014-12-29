@@ -18,11 +18,11 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package wantest;
+package wantest.events;
 
-import wantest.Federate;
+import wantest.TestFederate;
 
-public class Main
+public class ThroughputInteractionEvent implements Event
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -31,21 +31,45 @@ public class Main
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
+	private TestFederate sender;
+	private int payloadSize;
+	private long receivedTimestamp;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
+	public ThroughputInteractionEvent( TestFederate sender, int payloadSize, long receivedTimestamp )
+	{
+		this.sender = sender;
+		this.payloadSize = payloadSize;
+		this.receivedTimestamp = receivedTimestamp;
+	}
 
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
-	
 
+	public Type getType()
+	{
+		return Type.ThroughputInteraction;
+	}
+
+	public TestFederate getSender()
+	{
+		return this.sender;
+	}
+	
+	public long getReceivedTimestamp()
+	{
+		return this.receivedTimestamp;
+	}
+
+	public int getPayloadSize()
+	{
+		return this.payloadSize;
+	}
+	
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static void main( String[] args ) throws Exception
-	{
-		new Federate(args).execute();
-	}
 }
