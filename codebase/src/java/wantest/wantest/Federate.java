@@ -76,7 +76,7 @@ public class Federate
 
 		this.rtiamb = null; // created during createAndJoinFederate()
 		this.fedamb = null; // created during createAndJoinFederate()
-		this.storage = new Storage( this.logger, this.configuration );
+		this.storage = new Storage();
 		this.throughputDriver = new ThroughputDriver();
 		this.latencyDriver = new LatencyDriver();
 	}

@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestFederate
+public class TestFederate implements Comparable<TestFederate>
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -65,6 +65,21 @@ public class TestFederate
 		}
 		
 		return false;
+	}
+	
+	public int compareTo( TestFederate other )
+	{
+		if( other == null )
+			return 1;
+		
+		int ourHash = federateName.hashCode();
+		int theirHash = other.federateName.hashCode();
+		if( ourHash > theirHash )
+			return 1;
+		else if( ourHash < theirHash )
+			return -1;
+		else
+			return 0;
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////

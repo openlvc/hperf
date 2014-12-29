@@ -28,9 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import wantest.config.Configuration;
 import wantest.events.Event;
 
 /**
@@ -49,9 +46,6 @@ public class Storage
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
-	private Logger logger;
-	private Configuration configuration;
-	
 	// information about other federates
 	private Map<String,TestFederate> peers;
 	
@@ -65,15 +59,15 @@ public class Storage
 	// timers
 	private long throughputTestStartTime;
 	private long throughputTestStopTime;
+	
+	// latency test runtime variables
+	private int lastSerial;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public Storage( Logger logger, Configuration configuration ) 
+	public Storage() 
 	{
-		this.logger = logger;
-		this.configuration = configuration;
-		
 		this.peers = new HashMap<String,TestFederate>();
 		this.objects = new HashMap<ObjectInstanceHandle,TestObject>();
 		this.throughputEvents = new ArrayList<Event>();
@@ -160,6 +154,19 @@ public class Storage
 	public long getThroughputStartTime()
 	{
 		return this.throughputTestStartTime;
+	}
+
+	//////////////////////////
+	// Latency Test Methods //
+	//////////////////////////
+	public void setLastSerial( int serial )
+	{
+		this.lastSerial = serial;
+	}
+	
+	public int getLastSerial()
+	{
+		return this.lastSerial;
 	}
 
 	//----------------------------------------------------------

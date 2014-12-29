@@ -32,6 +32,7 @@ import wantest.federate.Utils;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateHandleSet;
 import hla.rti1516e.InteractionClassHandle;
+import hla.rti1516e.LogicalTime;
 import hla.rti1516e.NullFederateAmbassador;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
@@ -39,6 +40,7 @@ import hla.rti1516e.OrderType;
 import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.time.HLAfloat64Time;
 
 public class FederateAmbassador extends NullFederateAmbassador
 {
@@ -58,6 +60,11 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public boolean finishedThroughputTest;
 	public boolean startLatencyTest;
 	public boolean finishedLatencyTest;
+	
+	// time policy settings (used by the latency tests)
+	public boolean timeConstrained;
+	public boolean timeRegulating;
+	public long currentTime;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -73,6 +80,11 @@ public class FederateAmbassador extends NullFederateAmbassador
 		this.finishedThroughputTest = false;
 		this.startLatencyTest = false;
 		this.finishedLatencyTest = false;
+		
+		// time policy settings
+		this.timeConstrained = false;
+		this.timeRegulating = false;
+		this.currentTime = 0;
 	}
 
 	//----------------------------------------------------------
@@ -256,6 +268,31 @@ public class FederateAmbassador extends NullFederateAmbassador
 		                                                             receivedTimestamp,
 		                                                             payloadSize );
 		storage.addLatencyEvent( event );
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////// Time Management Methods ///////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////
+	@SuppressWarnings("rawtypes")
+	public void timeRegulationEnabled( LogicalTime time ) throws FederateInternalError
+	{
+		this.timeRegulating = true;
+		this.currentTime = (long)((HLAfloat64Time)time).getValue();
+		logger.info( "timeRegulationEnabled("+currentTime+")" );
+	}
+
+	@SuppressWarnings("rawtypes")
+	public void timeConstrainedEnabled( LogicalTime time ) throws FederateInternalError
+	{
+		this.timeConstrained = true;
+		this.currentTime = (long)((HLAfloat64Time)time).getValue();
+		logger.info( "timeConstrainedEnabled("+currentTime+")" );
+	}
+
+	@SuppressWarnings("rawtypes")
+	public void timeAdvanceGrant( LogicalTime time ) throws FederateInternalError
+	{
+		this.currentTime = (long)((HLAfloat64Time)time).getValue();
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////
