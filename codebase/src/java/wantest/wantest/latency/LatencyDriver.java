@@ -149,7 +149,8 @@ public class LatencyDriver
 	 */
 	private void loop( int loopNumber ) throws RTIexception
 	{
-		logger.info( "Processing loop ["+loopNumber+"]" );
+		if( loopNumber % ((int)configuration.getLoopCount()*0.1) == 0 )
+			logger.info( "Processing loop ["+loopNumber+"]" );
 
 		// cache a couple of things that we use multiple times
 		int peerCount = orderedPeers.size();
@@ -178,6 +179,12 @@ public class LatencyDriver
 			{
 				respondToInteractions();
 			}
+			
+			// advance time once we're all done
+			long requestedTime = fedamb.currentTime+1;
+			rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
+			while( fedamb.currentTime < requestedTime )
+				rtiamb.evokeCallback(looptime);
 		}
 		while( fedamb.currentTime % peerCount != 0 );
 	}
@@ -194,61 +201,42 @@ public class LatencyDriver
 		parameters.put( PC_LATENCY_PAYLOAD, payload );
 		
 		// setup the event and store in fedamb so we can record pings
-		long timestamp = System.currentTimeMillis();
 		int responseCount = configuration.getPeers().size();
-		LatencyEvent event = new LatencyEvent( serial, timestamp, responseCount, payload.length );
+		LatencyEvent event = new LatencyEvent( serial, responseCount, payload.length );
 		
-		// send the interaction!
-		rtiamb.sendInteraction( IC_LATENCY, parameters, null );
-
 		// store the event information
 		storage.addLatencyEvent( event );
 		fedamb.sendingSerial = serial;
 		fedamb.currentLatencyEvent = event;
 
+		// send the interaction!
+		event.setSentTimestamp( System.nanoTime() );
+		rtiamb.sendInteraction( IC_LATENCY, parameters, null );
+
 		// wait until we have all the responses before we request a time advance
 		while( event.hasReceivedAllResponses() == false )
-			rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
-
-		// step forward, releasing everyone else
-		long requestedTime = fedamb.currentTime+1;
-		rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
-		while( fedamb.currentTime < requestedTime )
-			rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
+			rtiamb.evokeCallback( looptime );
 	}
 
 	/**
-	 * It's someone elses turn to initiate the test. Monitor the fedamb for incoming
-	 * requests and response to them appropriately. We try to advance time right away,
-	 * noting that we'll be held until the initiating federate does so as well, and it
-	 * won't until its got all its responses.
+	 * It's someone elses turn to initiate the test. Monitor the fedamb for the incoming
+	 * request and respond as quickly as possible. Once we've responded, request a time
+	 * advance so that all our homies can sync up. We won't get the advance until the
+	 * requesting federate has all its responses, which should bring us all into step.
 	 */
 	private void respondToInteractions() throws RTIexception
 	{
-		// request a time advance immediately - we won't get it until the federate
-		// whose turn it is to initiate has got all our responses
-		long requestedTime = fedamb.currentTime+1;
-		rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
-
-		// wait until we get the grant
-		while( fedamb.currentTime < requestedTime )
-		{
-			// tick for a bit
+		// tick until we've been pinged
+		while( fedamb.requestedSerial == -1 )
 			rtiamb.evokeCallback( looptime );
-			
-			// check to see if we need to send our response yet
-			if( fedamb.requestedSerial != -1 )
-			{
-				ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create( 3 );
-				parameters.put( PC_LATENCY_SERIAL, Utils.intToBytes(fedamb.requestedSerial) );
-				parameters.put( PC_LATENCY_SENDER, configuration.getFederateName().getBytes() );
-				parameters.put( PC_LATENCY_PAYLOAD, payload );
-				rtiamb.sendInteraction( IC_LATENCY, parameters, null );
-				
-				// we've responded, reset the serial
-				fedamb.requestedSerial = -1;
-			}
-		}			
+		
+		// we have been summoned - respond
+		ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create( 3 );
+		parameters.put( PC_LATENCY_SERIAL, Utils.intToBytes(fedamb.requestedSerial) );
+		parameters.put( PC_LATENCY_SENDER, configuration.getFederateName().getBytes() );
+		parameters.put( PC_LATENCY_PAYLOAD, payload );
+		rtiamb.sendInteraction( IC_LATENCY, parameters, null );
+		fedamb.requestedSerial = -1; // reset
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////

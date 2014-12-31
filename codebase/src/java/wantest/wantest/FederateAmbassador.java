@@ -65,9 +65,9 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public boolean timeConstrained;
 	public boolean timeRegulating;
 	public long currentTime;
-	public int sendingSerial; // serial of event we are currently sending
-	public int requestedSerial; // serial of event we need to response to
 	public LatencyEvent currentLatencyEvent;
+	public volatile int sendingSerial; // serial of event we are currently sending
+	public volatile int requestedSerial; // serial of event we need to response to
 
 	
 	//----------------------------------------------------------
@@ -253,7 +253,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 	private void handleLatencyInteraction( ParameterHandleValueMap parameters )
 	{
 		// stop the clock!
-		long receivedTimestamp = System.currentTimeMillis();
+		long receivedTimestamp = System.nanoTime();
 		
 		// If this is in response to one of our requests, the serial will match
 		// the one we have stored. In this case, record the received timestamp
@@ -277,6 +277,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 				                     configuration.getPacketSize(),
 				                     logger );
 			}
+
 		}
 		else
 		{

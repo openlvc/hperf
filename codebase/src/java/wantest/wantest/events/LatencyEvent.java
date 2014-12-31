@@ -43,10 +43,10 @@ public class LatencyEvent
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public LatencyEvent( int serial, long sentTimestamp, int responseCount, int payloadSize )
+	public LatencyEvent( int serial, int responseCount, int payloadSize )
 	{
 		this.serial = serial;
-		this.sentTimestamp = sentTimestamp;
+		this.sentTimestamp = 0;
 		this.responseCount = responseCount;
 		this.payloadSize = payloadSize;
 		this.responses = new HashMap<TestFederate,Long>();
@@ -64,6 +64,11 @@ public class LatencyEvent
 	public long getSentTimestamp()
 	{
 		return this.sentTimestamp;
+	}
+
+	public void setSentTimestamp( long timestamp )
+	{
+		this.sentTimestamp = timestamp;
 	}
 
 	public int getPayloadSize()
