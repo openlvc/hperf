@@ -32,8 +32,8 @@ import org.apache.log4j.Logger;
 
 import wantest.Storage;
 import wantest.TestFederate;
+import wantest.Utils;
 import wantest.events.LatencyEvent;
-import wantest.federate.Utils;
 
 /**
  * This class takes the information that was gathered during the latency test, does a

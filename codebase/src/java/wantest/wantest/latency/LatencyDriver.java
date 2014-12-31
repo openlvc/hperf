@@ -34,9 +34,9 @@ import static wantest.Handles.*;
 import wantest.FederateAmbassador;
 import wantest.Storage;
 import wantest.TestFederate;
+import wantest.Utils;
 import wantest.config.Configuration;
 import wantest.events.LatencyEvent;
-import wantest.federate.Utils;
 
 public class LatencyDriver
 {

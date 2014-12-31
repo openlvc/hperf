@@ -28,7 +28,6 @@ import wantest.events.DiscoverEvent;
 import wantest.events.LatencyEvent;
 import wantest.events.ReflectEvent;
 import wantest.events.ThroughputInteractionEvent;
-import wantest.federate.Utils;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateHandleSet;
 import hla.rti1516e.InteractionClassHandle;

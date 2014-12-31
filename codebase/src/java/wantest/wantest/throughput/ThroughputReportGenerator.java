@@ -29,13 +29,13 @@ import org.apache.log4j.Logger;
 
 import wantest.Storage;
 import wantest.TestFederate;
+import wantest.Utils;
 import wantest.config.Configuration;
 import wantest.events.DiscoverEvent;
 import wantest.events.Event;
 import wantest.events.Event.Type;
 import wantest.events.ReflectEvent;
 import wantest.events.ThroughputInteractionEvent;
-import wantest.federate.Utils;
 
 /**
  * This class takes the information that was gathered during the throughput test, does a
