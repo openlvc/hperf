@@ -350,6 +350,8 @@ public class Configuration
 				count += 2;
 				continue;
 			}
+			
+			throw new RuntimeException( "Unknown argument: "+argument );
 		}
 		
 	}
