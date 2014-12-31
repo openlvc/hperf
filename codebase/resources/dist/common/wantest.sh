@@ -51,5 +51,5 @@ fi
 ### (target) execute #######################
 ############################################
 echo -e "Starting WAN Test Federate (use --help to display usage)"
-$JAVA -cp ./lib/wantest.jar:./lib/portico/2.0.1/portico.jar wantest.Main $*
+java -cp ./lib/wantest.jar:./lib/portico/2.0.1/portico.jar wantest.Main $*
 
