@@ -1,0 +1,13 @@
+#!/bin/sh
+tmux new-session -d -s portico 'ssh -t root@sg1.openlvc.org "cd ~/Developer/workspace/opensource/wantest/codebase;git fetch origin -p;git merge origin/master;bash"'
+tmux rename-window 'digitalocean'
+tmux splitw -v 'ssh -t root@sg2.openlvc.org "cd ~/Developer/workspace/opensource/wantest/codebase;git fetch origin -p;git merge origin/master;bash"'
+tmux splitw -h 'ssh -t root@nyc.openlvc.org "cd ~/Developer/workspace/opensource/wantest/codebase;git fetch origin -p;git merge origin/master;bash"'
+
+#tmux new-window -t portico:1 -n 'sg1' 'ssh root@sg1.openlvc.org'
+#tmux new-window -t portico:2 -n 'sg2' 'ssh root@sg2.openlvc.org'
+#tmux new-window -t portico:3 -n 'nyc' 'ssh root@nyc.openlvc.org'
+
+tmux select-pane -t portico:0.0
+tmux attach-session -t portico
+
