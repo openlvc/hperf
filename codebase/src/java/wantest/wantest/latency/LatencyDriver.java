@@ -166,13 +166,13 @@ public class LatencyDriver
 			int senderIndex = (int)fedamb.currentTime % peerCount;
 			String senderName = orderedPeers.get( senderIndex );
 
-			// Each interaction is sent with a serial to identify it - we calculate this
-			// so that it continually increases. 
-			int serial = (loopNumber-1) * peerCount + senderIndex + 1;
-
 			// do the sending (or listening)
 			if( configuration.getFederateName().equals(senderName) )
 			{
+				// Each interaction is sent with a serial to identify it - we calculate this
+				// so that it continually increases. 
+				int serial = (loopNumber-1) * peerCount + senderIndex + 1;
+
 				sendInteractionAndWait( serial );
 			}
 			else
@@ -196,9 +196,9 @@ public class LatencyDriver
 	private void sendInteractionAndWait( int serial ) throws RTIexception
 	{
 		ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create( 3 );
-		parameters.put( PC_LATENCY_SERIAL, Utils.intToBytes(serial) );
-		parameters.put( PC_LATENCY_SENDER, configuration.getFederateName().getBytes() );
-		parameters.put( PC_LATENCY_PAYLOAD, payload );
+		parameters.put( PC_PING_SERIAL, Utils.intToBytes(serial) );
+		parameters.put( PC_PING_SENDER, configuration.getFederateName().getBytes() );
+		parameters.put( PC_PING_PAYLOAD, payload );
 		
 		// setup the event and store in fedamb so we can record pings
 		int responseCount = configuration.getPeers().size();
@@ -206,16 +206,18 @@ public class LatencyDriver
 		
 		// store the event information
 		storage.addLatencyEvent( event );
-		fedamb.sendingSerial = serial;
 		fedamb.currentLatencyEvent = event;
 
 		// send the interaction!
 		event.setSentTimestamp( System.nanoTime() );
-		rtiamb.sendInteraction( IC_LATENCY, parameters, null );
-
+		rtiamb.sendInteraction( IC_PING, parameters, null );
+		
 		// wait until we have all the responses before we request a time advance
 		while( event.hasReceivedAllResponses() == false )
 			rtiamb.evokeCallback( looptime );
+
+		// clear the current fedamb event so we're don't mistakenly thing we are still processing
+		fedamb.currentLatencyEvent = null;
 	}
 
 	/**
@@ -227,16 +229,16 @@ public class LatencyDriver
 	private void respondToInteractions() throws RTIexception
 	{
 		// tick until we've been pinged
-		while( fedamb.requestedSerial == -1 )
+		while( fedamb.receivedPing == -1 )
 			rtiamb.evokeCallback( looptime );
 		
 		// we have been summoned - respond
 		ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create( 3 );
-		parameters.put( PC_LATENCY_SERIAL, Utils.intToBytes(fedamb.requestedSerial) );
-		parameters.put( PC_LATENCY_SENDER, configuration.getFederateName().getBytes() );
-		parameters.put( PC_LATENCY_PAYLOAD, payload );
-		rtiamb.sendInteraction( IC_LATENCY, parameters, null );
-		fedamb.requestedSerial = -1; // reset
+		parameters.put( PC_PING_ACK_SERIAL, Utils.intToBytes(fedamb.receivedPing) );
+		parameters.put( PC_PING_ACK_SENDER, configuration.getFederateName().getBytes() );
+		parameters.put( PC_PING_ACK_PAYLOAD, payload );
+		rtiamb.sendInteraction( IC_PING_ACK, parameters, null );
+		fedamb.receivedPing = -1; // reset
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////

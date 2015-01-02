@@ -225,11 +225,16 @@ public class Federate
 		PC_THROUGHPUT_SENDER  = rtiamb.getParameterHandle( IC_THROUGHPUT, "sender" );
 		PC_THROUGHPUT_PAYLOAD = rtiamb.getParameterHandle( IC_THROUGHPUT, "payload" );
 
-		IC_LATENCY         = rtiamb.getInteractionClassHandle( "LatencyInteraction" );
-		PC_LATENCY_SERIAL  = rtiamb.getParameterHandle( IC_LATENCY, "serial" );
-		PC_LATENCY_SENDER  = rtiamb.getParameterHandle( IC_LATENCY, "sender" );
-		PC_LATENCY_PAYLOAD = rtiamb.getParameterHandle( IC_LATENCY, "payload" );
+		IC_PING         = rtiamb.getInteractionClassHandle( "Ping" );
+		PC_PING_SERIAL  = rtiamb.getParameterHandle( IC_PING, "serial" );
+		PC_PING_SENDER  = rtiamb.getParameterHandle( IC_PING, "sender" );
+		PC_PING_PAYLOAD = rtiamb.getParameterHandle( IC_PING, "payload" );
 
+		IC_PING_ACK         = rtiamb.getInteractionClassHandle( "PingAck" );
+		PC_PING_ACK_SERIAL  = rtiamb.getParameterHandle( IC_PING_ACK, "serial" );
+		PC_PING_ACK_SENDER  = rtiamb.getParameterHandle( IC_PING_ACK, "sender" );
+		PC_PING_ACK_PAYLOAD = rtiamb.getParameterHandle( IC_PING_ACK, "payload" );
+		
 		///////////////////////////
 		// Publish and Subscribe //
 		///////////////////////////
@@ -252,8 +257,10 @@ public class Federate
 		rtiamb.subscribeInteractionClass( IC_THROUGHPUT );
 
 		// Class: LatencyInteraction
-		rtiamb.publishInteractionClass( IC_LATENCY );
-		rtiamb.subscribeInteractionClass( IC_LATENCY );
+		rtiamb.publishInteractionClass( IC_PING );
+		rtiamb.subscribeInteractionClass( IC_PING );
+		rtiamb.publishInteractionClass( IC_PING_ACK );
+		rtiamb.subscribeInteractionClass( IC_PING_ACK );
 		
 		logger.info( "Publish and Subscribe complete" );
 	}

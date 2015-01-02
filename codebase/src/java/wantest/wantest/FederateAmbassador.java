@@ -65,10 +65,8 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public boolean timeRegulating;
 	public long currentTime;
 	public LatencyEvent currentLatencyEvent;
-	public volatile int sendingSerial; // serial of event we are currently sending
-	public volatile int requestedSerial; // serial of event we need to response to
+	public volatile int receivedPing; // serial of the request we just received
 
-	
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
@@ -88,9 +86,8 @@ public class FederateAmbassador extends NullFederateAmbassador
 		this.timeConstrained = false;
 		this.timeRegulating = false;
 		this.currentTime = 0;
-		this.sendingSerial = -1;
-		this.requestedSerial = -1;
 		this.currentLatencyEvent = null;
+		this.receivedPing = -1;
 	}
 
 	//----------------------------------------------------------
@@ -201,8 +198,10 @@ public class FederateAmbassador extends NullFederateAmbassador
 	                                SupplementalReceiveInfo receiveInfo )
 	    throws FederateInternalError
 	{
-		if( interactionClass.equals(IC_LATENCY) )
-			handleLatencyInteraction( theParameters );
+		if( interactionClass.equals(IC_PING) )
+			handlePing( theParameters );
+		else if( interactionClass.equals(IC_PING_ACK) )
+			handlePingAck( theParameters );
 		else if( interactionClass.equals(IC_THROUGHPUT) )
 			handleThroughputInteraction( theParameters );
 	}
@@ -240,51 +239,48 @@ public class FederateAmbassador extends NullFederateAmbassador
 	}
 
 	/**
-	 * Handle a received latency event:
-	 * 
-	 *   (class LatencyInteraction reliable timestamp
-	 *     (parameter serial)
-	 *     (parameter sender)
-	 *     (parameter payload)
-	 *   )
-	 * 
+	 * Handle a received Ping event that we need to respond to.
 	 */
-	private void handleLatencyInteraction( ParameterHandleValueMap parameters )
+	private void handlePing( ParameterHandleValueMap parameters )
+	{
+		// get the serial out
+		int serial = Utils.bytesToInt( parameters.getValueReference(PC_PING_SERIAL).array() );
+		this.receivedPing = serial;
+
+		// validate the payload data if we've been asked to
+		if( configuration.getValidateData() )
+		{
+			// validate the data only if we're told to - will hurt latency!
+			Utils.verifyPayload( parameters.getValueReference(PC_PING_PAYLOAD).array(),
+			                     configuration.getPacketSize(),
+			                     logger );
+		}
+	}
+
+	/**
+	 * Have received a response to a Ping (perhaps it is ours!)
+	 */
+	private void handlePingAck( ParameterHandleValueMap parameters )
 	{
 		// stop the clock!
 		long receivedTimestamp = System.nanoTime();
-		
-		// If this is in response to one of our requests, the serial will match
-		// the one we have stored. In this case, record the received timestamp
-		// against the test federate with the event
-		int serial = Utils.bytesToInt( parameters.getValueReference(PC_LATENCY_SERIAL).array() );
-		if( serial == this.sendingSerial )
-		{
-			//////////////////////////
-			// Response to our Ping //
-			//////////////////////////
-			// find the TestFederate for the sender & record the timestamp
-			String sender = new String( parameters.getValueReference(PC_LATENCY_SENDER).array() );
-			TestFederate federate = storage.getPeer( sender );
-			this.currentLatencyEvent.addResponse( federate, receivedTimestamp );
 
-			// validate the payload data if we've been asked to
-			if( configuration.getValidateData() )
-			{
-				// validate the data only if we're told to - will hurt latency!
-				Utils.verifyPayload( parameters.getValueReference(PC_LATENCY_PAYLOAD).array(),
-				                     configuration.getPacketSize(),
-				                     logger );
-			}
+		// are we waiting for responses?
+		if( this.currentLatencyEvent == null )
+			return;
 
-		}
-		else
+		// find the TestFederate for the sender & record the timestamp
+		String sender = new String( parameters.getValueReference(PC_PING_ACK_SENDER).array() );
+		TestFederate federate = storage.getPeer( sender );
+		this.currentLatencyEvent.addResponse( federate, receivedTimestamp );
+
+		// validate the payload data if we've been asked to
+		if( configuration.getValidateData() )
 		{
-			///////////////////////////
-			// Request for Ping Back //
-			///////////////////////////
-			// this is an initial ping from someone else - record it so we can respond
-			this.requestedSerial = serial;
+			// validate the data only if we're told to - will hurt latency!
+			Utils.verifyPayload( parameters.getValueReference(PC_PING_ACK_PAYLOAD).array(),
+			                     configuration.getPacketSize(),
+			                     logger );
 		}
 	}
 

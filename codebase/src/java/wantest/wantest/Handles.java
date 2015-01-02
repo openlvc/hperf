@@ -47,10 +47,16 @@ public class Handles
 	public static ParameterHandle        PC_THROUGHPUT_SENDER  = null; // string - federate name
 	public static ParameterHandle        PC_THROUGHPUT_PAYLOAD = null; // byte[] stuffing
 
-	// Class: LatencyInteraction
-	public static InteractionClassHandle IC_LATENCY         = null;
-	public static ParameterHandle        PC_LATENCY_SERIAL  = null; // string - event id
-	public static ParameterHandle        PC_LATENCY_SENDER  = null; // string - federate name
-	public static ParameterHandle        PC_LATENCY_PAYLOAD = null; // byte[] stuffing
-	
+	// Class: Ping
+	public static InteractionClassHandle IC_PING         = null;
+	public static ParameterHandle        PC_PING_SERIAL  = null; // int - event id
+	public static ParameterHandle        PC_PING_SENDER  = null; // string - federate name
+	public static ParameterHandle        PC_PING_PAYLOAD = null; // byte[] stuffing
+
+	// Class: PingAck
+	public static InteractionClassHandle IC_PING_ACK         = null;
+	public static ParameterHandle        PC_PING_ACK_SERIAL  = null; // int - event id
+	public static ParameterHandle        PC_PING_ACK_SENDER  = null; // string - federate name
+	public static ParameterHandle        PC_PING_ACK_PAYLOAD = null; // byte[] stuffing
+
 }

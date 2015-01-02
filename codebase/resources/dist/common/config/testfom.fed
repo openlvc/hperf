@@ -29,8 +29,13 @@
         (parameter sender)
         (parameter payload)
       )
-      (class LatencyInteraction reliable timestamp
-        (parameter serial)   ;; byte
+      (class Ping reliable timestamp
+        (parameter serial)
+        (parameter sender)
+        (parameter payload)
+      )
+      (class PingAck reliable timestamp
+        (parameter serial)
         (parameter sender)
         (parameter payload)
       )
