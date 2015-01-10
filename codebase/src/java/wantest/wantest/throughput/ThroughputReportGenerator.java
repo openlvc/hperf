@@ -282,33 +282,35 @@ public class ThroughputReportGenerator
 		logger.info( "" );
 		logger.info( " === Test Distribution ===" );
 		logger.info( "" );		
-		logger.info( "     ----------------------------------" );
-		logger.info( "     |        | Throughput            |" );
-		logger.info( "     | Events | Per-Second | Total    |" );
-		logger.info( "     |--------|------------|----------|" );
-	  //logger.info( "  12s| 100000 |  123.4MB/s | 1234.5MB |" );
-	  //logger.info( "     ---------------------------------" );
+		logger.info( "     --------------------------------------------|" );
+		logger.info( "     |        | Throughput            |          |" );
+		logger.info( "     | Events | Per-Second | Total    |   Msg/s  |" );
+		logger.info( "     |--------|------------|----------|----------|" );
+	  //logger.info( "  12s| 100000 |  123.4MB/s | 1234.5MB |  10000/s |" );
+	  //logger.info( "     ---------------------------------------------" );
 		for( int i = 0; i < distribution.length; i++ )
 		{
 			Period period = distribution[i];
-			String line = String.format( " %3ds| %6d |  %.9s | %.8s |",
+			String line = String.format( " %3ds| %6d |  %.9s | %.8s | %6d/s |",
 			                             (i+1),
 			                             period.count,
 			                             period.getAvgThroughputString(1000),
-			                             period.getTotalThroughputString() );
+			                             period.getTotalThroughputString(),
+			                             period.count );
 
 			logger.info( line );
 		}
 
-		logger.info( "     ----------------------------------" );
+		logger.info( "     ---------------------------------------------" );
 		
 		// log the information for the full dataset
-		String line = String.format( "  All| %6d |  %.9s | %.8s |",
+		String line = String.format( "  All| %6d |  %.9s | %.8s | %6d/s |",
 		                             allEvents.count,
 		                             allEvents.getAvgThroughputString(runtime),
-		                             allEvents.getTotalThroughputString() );
+		                             allEvents.getTotalThroughputString(),
+		                             (int)(allEvents.count/totalSeconds) );
 		logger.info( line );
-		logger.info( "     ----------------------------------" );		
+		logger.info( "     ---------------------------------------------" );		
 	}
 
 	/**
