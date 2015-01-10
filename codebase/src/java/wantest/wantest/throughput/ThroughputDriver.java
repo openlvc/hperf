@@ -233,7 +233,8 @@ public class ThroughputDriver
 	 */
 	private void loop( int loopNumber ) throws RTIexception
 	{
-		logger.info( "Processing loop ["+loopNumber+"]" );
+		if( loopNumber % ((int)configuration.getLoopCount()*0.1) == 0 )
+			logger.info( "Processing loop ["+loopNumber+"]" );
 		
 		//////////////////////////////////////////////
 		// send out an update for all local objects //
