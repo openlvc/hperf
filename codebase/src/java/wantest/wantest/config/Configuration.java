@@ -271,17 +271,17 @@ public class Configuration
 			{
 				validateArgIsValue( argument, args[count+1] );
 				String packetString = args[count+1];
-				if( packetString.endsWith("K") )
+				if( packetString.toUpperCase().endsWith("K") )
 				{
 					int size = Integer.parseInt( packetString.substring(0,packetString.length()-1) );
 					this.packetSize = size * 1024;
 				}
-				else if( packetString.endsWith("M") )
+				else if( packetString.toUpperCase().endsWith("M") )
 				{
 					int size = Integer.parseInt( packetString.substring(0,packetString.length()-1) );
 					this.packetSize = size * 1024 * 1024;
 				}
-				else if( packetString.endsWith("B") )
+				else if( packetString.toUpperCase().endsWith("B") )
 				{
 					int size = Integer.parseInt( packetString.substring(0,packetString.length()-1) );
 					this.packetSize = size;
