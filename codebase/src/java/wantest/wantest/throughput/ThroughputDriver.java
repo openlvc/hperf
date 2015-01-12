@@ -22,7 +22,9 @@ package wantest.throughput;
 
 import static wantest.Handles.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -316,7 +318,9 @@ public class ThroughputDriver
 		// events in the queue, while giving the caller control over the
 		// block time when there is no work to do
 		double looptime = ((double)configuration.getLoopWait()) / 1000;
-		rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
+		if( loopNumber % 4 == 0 )
+			try{ Thread.sleep( 0, 10000 ); } catch (InterruptedException ie ) {}
+		//rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -326,6 +330,33 @@ public class ThroughputDriver
 	{
 		logger.info( "Finished sending messages, waiting for everyone else" );
 		
+		int targetCount = configuration.getLoopCount() + 1; // number of updates expected per object
+		List<TestFederate> peers = new ArrayList<TestFederate>( storage.getPeers() );
+		while( peers.size() > 0 )
+		{
+			for( TestFederate federate : storage.getPeers() )
+			{
+				boolean finished = true;
+				for( TestObject object : federate.getObjects() )
+				{
+					if( object.getEventCount() != targetCount )
+					{
+						finished = false;
+						break;
+					}
+				}
+				
+				if( finished )
+				{
+					logger.info( "Received all updates for ["+federate.getFederateName()+"]" );
+					peers.remove( federate );
+				}
+			}
+			
+			rtiamb.evokeMultipleCallbacks( 1.0, 1.0 ); // effectively a sleep
+		}		
+		
+		logger.info( "All finished - synchronizing" );
 		rtiamb.synchronizationPointAchieved( "FINISH_THROUGHPUT_TEST" );
 		while( fedamb.finishedThroughputTest == false )
 		{

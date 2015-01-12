@@ -94,6 +94,16 @@ public class TestObject
 	{
 		return this.creator != null;
 	}
+	
+	public List<Event> getEvents()
+	{
+		return this.events;
+	}
+	
+	public int getEventCount()
+	{
+		return this.events.size();
+	}
 
 	//----------------------------------------------------------
 	//                     STATIC METHODS

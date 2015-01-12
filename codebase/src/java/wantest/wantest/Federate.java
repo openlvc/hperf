@@ -172,7 +172,7 @@ public class Federate
 		// connect
 		logger.info( "Connecting..." );
 		fedamb = new FederateAmbassador( configuration, storage );
-		rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
+		rtiamb.connect( fedamb, CallbackModel.HLA_IMMEDIATE );
 
 		//////////////////////////////
 		// 3. create the federation //
