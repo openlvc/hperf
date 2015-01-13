@@ -73,9 +73,9 @@ public class Configuration
 		
 		// execution properties
 		this.loopCount = 20;
-		this.loopWait = 1000;
+		this.loopWait = 10;
 		this.objectCount = 20;
-		this.packetSize = 4096;
+		this.packetSize = 1024;
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
 
