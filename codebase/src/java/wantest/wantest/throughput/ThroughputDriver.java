@@ -24,6 +24,7 @@ import static wantest.Handles.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -112,12 +113,39 @@ public class ThroughputDriver
 		// Confirm everyone else has registered their test objects and sync up for start
 		this.waitForStart();
 		
+		//
 		// Loop
+		//
+		// We log progress at each 10% mark for the text, so we need to know how
+		// often that should be and somewhere to store the received count and
+		// timestamp the last time we passed the threshold
+		int batchSize = getBatchSize();
+		int lastEventCount = 0;
+		long lastTimestamp = System.nanoTime();
+
 		this.logger.info( "Starting Throughput Test" );
 		this.storage.startThroughputTestTimer();
 		for( int i = 0; i < configuration.getLoopCount(); i++ )
 		{
+			// Do the actual work
 			loop( i+1 );
+
+			// Log some information!
+			if( i != 0 && i % batchSize == 0 )
+			{
+				long now = System.nanoTime();
+				long duration = TimeUnit.NANOSECONDS.toMillis( now-lastTimestamp );
+				int eventCount = storage.getThroughputEvents().size();
+				int eventsReceived = eventCount - lastEventCount;
+				int eventsPerSecond = (int)(eventsReceived / (duration/1000.0));
+
+				logger.info( String.format("Finished loop %-7d -- %dms, %d events received (%d/s)",
+				                           i, duration, eventsReceived, eventsPerSecond) );
+				
+				// reset the batch variables
+				lastTimestamp = now;
+				lastEventCount = eventCount;
+			}
 		}
 
 		// Wait for everyone to finish their stuff
@@ -127,7 +155,17 @@ public class ThroughputDriver
 		logger.info( "Throughput test finished" );
 		logger.info( "" );
 	}
-	
+
+	/** We print out stats every so often during a run. This method determines how often.
+	    For small sizes, this is every 10% of the total loop count. For larger, it's more often */
+	private int getBatchSize()
+	{
+		if( configuration.getLoopCount() > 100000 )
+			return 10000;
+		else
+			return (int)(configuration.getLoopCount() * 0.1);
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////// Register Objects /////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,9 +271,6 @@ public class ThroughputDriver
 	 */
 	private void loop( int loopNumber ) throws RTIexception
 	{
-		if( loopNumber % ((int)configuration.getLoopCount()*0.1) == 0 )
-			logger.info( "Processing loop ["+loopNumber+"]" );
-		
 		//////////////////////////////////////////////
 		// send out an update for all local objects //
 		//////////////////////////////////////////////
