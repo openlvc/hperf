@@ -117,7 +117,21 @@ public class Utils
 		else
 			return size+"B";
 	}
-	
+
+	public static String getSizeString( double bytes, int decimalPlaces )
+	{
+		// let's see how much we have so we can figure out the right qualifier
+		double totalkb = bytes / 1024;
+		double totalmb = totalkb / 1024;
+		double totalgb = totalmb / 1024;
+		if( totalgb > 1 )
+			return String.format( "%5."+decimalPlaces+"fGB/s", totalgb );
+		else if( totalmb > 1 )
+			return String.format( "%5."+decimalPlaces+"fMB/s", totalmb );
+		else
+			return String.format( "%5."+decimalPlaces+"fKB/s", totalkb );
+	}
+
 	///////////////////////////////////////////////////////////////
 	// Int Conversion Methods                                    //
 	///////////////////////////////////////////////////////////////

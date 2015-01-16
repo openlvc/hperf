@@ -133,14 +133,19 @@ public class ThroughputDriver
 			// Log some information!
 			if( i != 0 && i % batchSize == 0 )
 			{
+				// duration
 				long now = System.nanoTime();
-				long duration = TimeUnit.NANOSECONDS.toMillis( now-lastTimestamp );
+				long duration = TimeUnit.NANOSECONDS.toMillis( now - lastTimestamp );
+				// events total and per-second
 				int eventCount = storage.getThroughputEvents().size();
 				int eventsReceived = eventCount - lastEventCount;
 				int eventsPerSecond = (int)(eventsReceived / (duration/1000.0));
+				// throughput per second
+				int totalbytes = eventsReceived*configuration.getPacketSize();
+				String mbps = Utils.getSizeString( totalbytes / (duration/1000.0), 2 );
 
-				logger.info( String.format("Finished loop %-7d -- %dms, %d events received (%d/s)",
-				                           i, duration, eventsReceived, eventsPerSecond) );
+				String msg = "Finished loop %-7d -- %dms, %d events received (%d/s), %s";
+				logger.info( String.format(msg, i, duration, eventsReceived, eventsPerSecond, mbps) );
 				
 				// reset the batch variables
 				lastTimestamp = now;
