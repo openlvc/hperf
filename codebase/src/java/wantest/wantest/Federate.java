@@ -88,6 +88,16 @@ public class Federate
 	// main test federate execution process
 	public void execute() throws Exception
 	{
+		// Check to make sure we have a test to run
+		if( !configuration.getRunThroughputTest() && !configuration.getRunLatencyTest() )
+			throw new Exception( "You must specify at least --throughput-test or --latency-test" );
+		
+		if( configuration.getRunThroughputTest() )
+			logger.info( "Running THROUGHPUT test" );
+		if( configuration.getRunLatencyTest() )
+			logger.info( "Running LATENCY test" );
+		
+		
 		// Create and Join the federation
 		this.createAndJoinFederation();
 

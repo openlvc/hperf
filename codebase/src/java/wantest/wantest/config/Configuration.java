@@ -79,9 +79,9 @@ public class Configuration
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
 
-		// default to run both latency and throughput tests unless they opt-out
-		this.runThroughputTest = true;
-		this.runLatencyTest = true;
+		// default to run neither test unless instructed
+		this.runThroughputTest = false;
+		this.runLatencyTest = false;
 		
 		this.printEventLog = false;
 		this.csvFile = null;
@@ -322,16 +322,16 @@ public class Configuration
 				continue;
 			}
 			
-			if( argument.startsWith("--no-throughput-test") )
+			if( argument.startsWith("--throughput-test") )
 			{
-				this.runThroughputTest = false;
+				this.runThroughputTest = true;
 				count++;
 				continue;
 			}
 			
-			if( argument.startsWith("--no-latency-test") )
+			if( argument.startsWith("--latency-test") )
 			{
-				this.runLatencyTest = false;
+				this.runLatencyTest = true;
 				count++;
 				continue;
 			}
