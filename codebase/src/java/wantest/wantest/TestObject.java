@@ -20,9 +20,7 @@
  */
 package wantest;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.concurrent.ConcurrentLinkedQueue;
 import wantest.events.Event;
 import hla.rti1516e.ObjectInstanceHandle;
 
@@ -40,7 +38,7 @@ public class TestObject
 	private TestFederate creator;
 	private long createTime;
 	
-	private List<Event> events;
+	private ConcurrentLinkedQueue<Event> events;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -51,7 +49,7 @@ public class TestObject
 		this.objectName = objectName;
 		this.creator = null;
 		this.createTime = System.currentTimeMillis();
-		this.events = new ArrayList<Event>();
+		this.events = new ConcurrentLinkedQueue<Event>();
 	}
 
 	//----------------------------------------------------------
@@ -93,6 +91,16 @@ public class TestObject
 	public boolean isValid()
 	{
 		return this.creator != null;
+	}
+	
+	public ConcurrentLinkedQueue<Event> getEvents()
+	{
+		return this.events;
+	}
+	
+	public int getEventCount()
+	{
+		return this.events.size();
 	}
 
 	//----------------------------------------------------------

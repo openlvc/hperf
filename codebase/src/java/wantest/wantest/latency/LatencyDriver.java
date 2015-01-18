@@ -184,7 +184,12 @@ public class LatencyDriver
 			long requestedTime = fedamb.currentTime+1;
 			rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
 			while( fedamb.currentTime < requestedTime )
-				rtiamb.evokeCallback(looptime);
+			{
+				if( configuration.isEvokedCallback() )
+					rtiamb.evokeCallback(looptime);
+				else
+					Utils.sleep( 5, 0 );
+			}
 		}
 		while( fedamb.currentTime % peerCount != 0 );
 	}

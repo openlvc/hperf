@@ -106,6 +106,17 @@ public class TestFederate implements Comparable<TestFederate>
 		return this.federateName;
 	}
 
+	public int getEventCount()
+	{
+		int eventCount = 0;
+		for( TestObject object : objects.values() )
+		{
+			eventCount += object.getEventCount();
+		}
+		
+		return eventCount;
+	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

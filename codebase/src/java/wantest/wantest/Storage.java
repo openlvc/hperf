@@ -22,11 +22,10 @@ package wantest;
 
 import hla.rti1516e.ObjectInstanceHandle;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import wantest.events.Event;
 import wantest.events.LatencyEvent;
@@ -54,8 +53,8 @@ public class Storage
 	private Map<ObjectInstanceHandle,TestObject> objects;
 	
 	// event information
-	private List<Event> throughputEvents;
-	private List<LatencyEvent> latencyEvents;
+	private ConcurrentLinkedQueue<Event> throughputEvents;
+	private ConcurrentLinkedQueue<LatencyEvent> latencyEvents;
 	
 	// timers
 	private long throughputTestStartTime;
@@ -68,8 +67,8 @@ public class Storage
 	{
 		this.peers = new HashMap<String,TestFederate>();
 		this.objects = new HashMap<ObjectInstanceHandle,TestObject>();
-		this.throughputEvents = new ArrayList<Event>();
-		this.latencyEvents = new ArrayList<LatencyEvent>();
+		this.throughputEvents = new ConcurrentLinkedQueue<Event>();
+		this.latencyEvents = new ConcurrentLinkedQueue<LatencyEvent>();
 		
 		// timers
 		this.throughputTestStartTime = 0;
@@ -112,11 +111,11 @@ public class Storage
 	// Event Methods //
 	///////////////////
 	public void addThroughputEvent( Event event )
-	{
+	{		
 		this.throughputEvents.add( event );
 	}
 	
-	public List<Event> getThroughputEvents()
+	public ConcurrentLinkedQueue<Event> getThroughputEvents()
 	{
 		return this.throughputEvents;
 	}
@@ -126,7 +125,7 @@ public class Storage
 		this.latencyEvents.add( event );
 	}
 	
-	public List<LatencyEvent> getLatencyEvents()
+	public ConcurrentLinkedQueue<LatencyEvent> getLatencyEvents()
 	{
 		return this.latencyEvents;
 	}
