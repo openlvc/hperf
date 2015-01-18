@@ -125,31 +125,41 @@ public class ThroughputDriver
 
 		this.logger.info( "Starting Throughput Test" );
 		this.storage.startThroughputTestTimer();
-		for( int i = 0; i < configuration.getLoopCount(); i++ )
+		for( int i = 1; i <= configuration.getLoopCount(); i++ )
 		{
 			// Do the actual work
-			loop( i+1 );
+			loop( i );
 
-			// Log some information!
+			// Log some summary information every now and then
 			if( i != 0 && i % batchSize == 0 )
 			{
 				// duration
 				long now = System.nanoTime();
 				long duration = TimeUnit.NANOSECONDS.toMillis( now - lastTimestamp );
-				// events total and per-second
-				int eventCount = storage.getThroughputEvents().size();
-				int eventsReceived = eventCount - lastEventCount;
-				int eventsPerSecond = (int)(eventsReceived / (duration/1000.0));
-				// throughput per second
-				int totalbytes = eventsReceived*configuration.getPacketSize();
-				String mbps = Utils.getSizeString( totalbytes / (duration/1000.0), 2 );
-
-				String msg = "Finished loop %-7d -- %dms, %d events received (%d/s), %s";
-				logger.info( String.format(msg, i, duration, eventsReceived, eventsPerSecond, mbps) );
+				double seconds = duration / 1000.0;
 				
-				// reset the batch variables
+				// events total and per-second
+				int eventListSize     = storage.getThroughputEvents().size();
+				int receivedCount     = eventListSize - lastEventCount;
+				int receivedPerSecond = (int)(receivedCount / seconds);
+				int sentCount         = (configuration.getObjectCount()*2) * batchSize;
+				int sentPerSecond     = (int)(sentCount / seconds);
+				
+				// throughput per second
+				int packetSize      = configuration.getPacketSize();
+				int totalbytes      = receivedCount * packetSize;
+				String receivedmbps = Utils.getSizeString( totalbytes / seconds, 2 );
+				totalbytes      = sentCount * packetSize;
+				String sentmbps = Utils.getSizeString( totalbytes / seconds, 2 );
+
+				// log it all for the people
+				String msg = "Finished loop %-7d -- %5dms, %6d received (%d/s), %s -- %6d sent (%d/s), %s";
+				logger.info( String.format(msg, i, duration, receivedCount, receivedPerSecond,
+				                           receivedmbps, sentCount, sentPerSecond, sentmbps) );
+				
+				// reset the batch variables so we can compare next time
 				lastTimestamp = now;
-				lastEventCount = eventCount;
+				lastEventCount = eventListSize;
 			}
 		}
 
