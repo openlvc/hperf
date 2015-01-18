@@ -132,6 +132,35 @@ public class Utils
 			return String.format( "%5."+decimalPlaces+"fKB/s", totalkb );
 	}
 
+	/** 
+	 * Sleep for the given milliseconds, throw an unchecked exception
+	 * if we are interrupted for any reason.
+	 */
+	public static final void sleep( long millis )
+	{
+		sleep( millis, 0 );
+	}
+
+	/**
+	 * Sleep for the given milliseconds and additional nanos. On most operating
+	 * systems this should use the timer with the highest resolution available
+	 * to the JVM. If you just want to sleep for some period of nanos, pass `0`
+	 * for the millis value.
+	 * 
+	 * Throw an unchecked exception if we are interrupted for any reason
+	 */
+	public static final void sleep( long millis, int nanos )
+	{
+		try
+		{
+			Thread.sleep( millis, nanos );
+		}
+		catch( InterruptedException ie )
+		{
+			throw new RuntimeException( ie );
+		}
+	}
+	
 	///////////////////////////////////////////////////////////////
 	// Int Conversion Methods                                    //
 	///////////////////////////////////////////////////////////////

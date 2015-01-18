@@ -23,6 +23,7 @@ package wantest.throughput;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -316,7 +317,7 @@ public class ThroughputReportGenerator
 	/**
 	 * Create and populate a period from the given list of events
 	 */
-	private Period analyzePeriod( List<Event> list )
+	private Period analyzePeriod( Collection<Event> list )
 	{
 		Period period = new Period();
 		int eventCount = 0;

@@ -89,14 +89,14 @@ public class Federate
 	public void execute() throws Exception
 	{
 		// Check to make sure we have a test to run
-		if( !configuration.getRunThroughputTest() && !configuration.getRunLatencyTest() )
+		if( !configuration.isThroughputTestEnabled() && !configuration.isLatencyTestEnabled() )
 			throw new Exception( "You must specify at least --throughput-test or --latency-test" );
 		
-		if( configuration.getRunThroughputTest() )
-			logger.info( "Running THROUGHPUT test" );
-		if( configuration.getRunLatencyTest() )
-			logger.info( "Running LATENCY test" );
-		
+		logger.info( "" );
+		logger.info( "Throughput Test: "+configuration.isThroughputTestEnabled() );
+		logger.info( "   Latency Test: "+configuration.isLatencyTestEnabled() );
+		logger.info( "  Callback Mode: "+(configuration.isImmediateCallback() ? "IMMEDIATE":"EVOKED") );
+		logger.info( "" );
 		
 		// Create and Join the federation
 		this.createAndJoinFederation();
@@ -117,18 +117,18 @@ public class Federate
 		// Main test execution //
 		/////////////////////////
 		// Hand off execution to the specific test executors
-		if( configuration.getRunThroughputTest() )
+		if( configuration.isThroughputTestEnabled() )
 			throughputDriver.execute( configuration, rtiamb, fedamb, storage );
 		
-		if( configuration.getRunLatencyTest() )
+		if( configuration.isLatencyTestEnabled() )
 			latencyDriver.execute( configuration, rtiamb, fedamb, storage );
 
 		// Print the reports -- we do this after both tests have run
 		// so that all the output is delivered together at the end of testing
-		if( configuration.getRunThroughputTest() )
+		if( configuration.isThroughputTestEnabled() )
 			new ThroughputReportGenerator(configuration,storage).printReport();
 		
-		if( configuration.getRunLatencyTest() )
+		if( configuration.isLatencyTestEnabled() )
 			new LatencyReportGenerator(storage).printReport();		
 
 

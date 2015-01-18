@@ -66,8 +66,8 @@ public class LatencyReportGenerator
 
 	public void printReport()
 	{
-		// what was the payload size?
-		int payload = storage.getLatencyEvents().get(0).getPayloadSize();
+		// what was the payload size? -- haven't got access to config :(
+		int payload = storage.getLatencyEvents().element().getPayloadSize();
 		
 		// print the overall summary
 		logger.info( " =================================" );

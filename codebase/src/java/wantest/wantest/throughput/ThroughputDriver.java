@@ -92,7 +92,7 @@ public class ThroughputDriver
 	 */
 	public void execute( Configuration configuration,
 	                     RTIambassador rtiamb,
-	                     FederateAmbassador fedamb, // TODO do we need this??
+	                     FederateAmbassador fedamb,
 	                     Storage storage )
 		throws RTIexception
 	{
@@ -115,12 +115,14 @@ public class ThroughputDriver
 		// Confirm everyone else has registered their test objects and sync up for start
 		this.waitForStart();
 		
-		//
-		// Loop
-		//
-		// We log progress at each 10% mark for the text, so we need to know how
-		// often that should be and somewhere to store the received count and
-		// timestamp the last time we passed the threshold
+		//////////////////////////////////////////////////////////////////////////////
+		//                                                                          //
+		// Loop                                                                     //
+		//                                                                          //
+		// We log progress at each 10% mark for the text, so we need to know how    //
+		// often that should be and somewhere to store the received count and       //
+		// timestamp the last time we passed the threshold                          //
+		//////////////////////////////////////////////////////////////////////////////
 		int batchSize = getBatchSize();
 		int lastEventCount = 0;
 		long lastTimestamp = System.nanoTime();
@@ -133,7 +135,8 @@ public class ThroughputDriver
 			loop( i );
 
 			// Log some summary information every now and then
-			if( i != 0 && i % batchSize == 0 )
+			// Well, that got out of hand. One line to loop, a bajillion to watch when we start/stop
+			if( i % batchSize == 0 && i != 0 )
 			{
 				// duration
 				long now = System.nanoTime();
@@ -178,9 +181,13 @@ public class ThroughputDriver
 	private int getBatchSize()
 	{
 		if( configuration.getLoopCount() > 100000 )
+		{
 			return 10000;
+		}
 		else
-			return (int)(configuration.getLoopCount() * 0.1);
+		{
+			return (int)Math.ceil( configuration.getLoopCount() * 0.1 );
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -313,14 +320,28 @@ public class ThroughputDriver
 		////////////////////////////////////////////////////
 		// give some time over to process incoming events //
 		////////////////////////////////////////////////////
-		// Tick for at least the loopWait time, but no longer four times
-		// its value. This should give us enough time to process all the
-		// events in the queue, while giving the caller control over the
-		// block time when there is no work to do
-		double looptime = ((double)configuration.getLoopWait()) / 1000;
-		if( loopNumber % 4 == 0 )
-			try{ Thread.sleep( 0, 10000 ); } catch (InterruptedException ie ) {}
-		//rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
+		// If we use IMMEDIATE callback mode - take a shallow breath every now and then
+		// If we use EVOKED callback mode - tick away!
+
+		if( configuration.isImmediateCallback() && (loopNumber % 4 == 0) )
+		{
+			// so here's the deal - we pump out events so fast we can overwhelm the
+			// poor LRC. Every now and then, take an ever so slight breather to let
+			// it catch up
+// TODO fix me
+// disabled line for now
+// oddly enough - just doing the mod operation sucks up enough time :S
+//			Utils.sleep( 0, 10000 ); // 10 micros - dependent on timer resolution
+		}
+		else
+		{
+			// Tick for at least the loopWait time, but no longer four times
+			// its value. We'll only continue to be held if there are messages
+			// pending that require attention, so if we go past mintime it is
+			// with good cause.
+			double looptime = ((double)configuration.getLoopWait()) / 1000;
+			rtiamb.evokeMultipleCallbacks( looptime, looptime*4.0 );
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,18 +350,36 @@ public class ThroughputDriver
 	private void waitForFinish() throws RTIexception
 	{
 		logger.info( "Finished sending messages, waiting for everyone else" );
+
+		// Get out own collection of all our peers that we can modify
+		// As we encounter one that is finished, we'll remove it. When
+		// they're all gone - everyone has finished!
+		List<TestFederate> notfinished = new ArrayList<TestFederate>( storage.getPeers() );
+
+		// For each object, we expect loopNumber events + the discover event
+		int targetCount = configuration.getLoopCount() + 1;
 		
-		int targetCount = configuration.getLoopCount() + 1; // number of updates expected per object
-		List<TestFederate> peers = new ArrayList<TestFederate>( storage.getPeers() );
-		while( peers.size() > 0 )
+		// Look - sometimes packets go wrong. Let's not wait forever - let's give them X many go's
+		int remainingLives = 5;
+		
+		// let's see what the state of things is
+		while( notfinished.isEmpty() == false )
 		{
+			if( --remainingLives == 0 )
+			{
+				logger.info( "Waited too long - these events clearly aren't coming, dropped packets" );
+				break;
+			}
+			
 			for( TestFederate federate : storage.getPeers() )
 			{
+				// assume they are finished - catch them out if they're not
 				boolean finished = true;
 				for( TestObject object : federate.getObjects() )
 				{
 					if( object.getEventCount() != targetCount )
 					{
+						// their even count does not match what we expect - they're not done
 						finished = false;
 						break;
 					}
@@ -348,12 +387,22 @@ public class ThroughputDriver
 				
 				if( finished )
 				{
-					logger.info( "Received all updates for ["+federate.getFederateName()+"]" );
-					peers.remove( federate );
+					logger.info( "Received all updates for ["+federate.getFederateName()+"]: "+
+					             federate.getEventCount()+" (total: "+storage.getThroughputEvents().size()+")" );
+					notfinished.remove( federate );
+				}
+				else
+				{
+					logger.info( "Waiting for ["+federate.getFederateName()+"]: "+
+			             federate.getEventCount()+" (total: "+storage.getThroughputEvents().size()+")" );
 				}
 			}
 			
-			rtiamb.evokeMultipleCallbacks( 1.0, 1.0 ); // effectively a sleep
+			// wait/tick for a little bit to let more events filter in
+			if( configuration.isImmediateCallback() )
+				Utils.sleep( 1000, 0 );
+			else
+				rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
 		}		
 		
 		logger.info( "All finished - synchronizing" );

@@ -55,6 +55,7 @@ public class Configuration
 
 	private boolean runThroughputTest;
 	private boolean runLatencyTest;
+	private boolean isImmediateCallbackMode;
 
 	private boolean printEventLog;
 	private String csvFile;
@@ -82,6 +83,9 @@ public class Configuration
 		// default to run neither test unless instructed
 		this.runThroughputTest = false;
 		this.runLatencyTest = false;
+		
+		// what is our callback mode? Immediate or Evoked?
+		this.isImmediateCallbackMode = true; 
 		
 		this.printEventLog = false;
 		this.csvFile = null;
@@ -176,16 +180,31 @@ public class Configuration
 		return this.peers;
 	}
 
-	public boolean getRunThroughputTest()
+	// Execution and Misc Options
+	/** Should the throughput test be run? */
+	public boolean isThroughputTestEnabled()
 	{
 		return this.runThroughputTest;
 	}
 	
-	public boolean getRunLatencyTest()
+	/** Should the latency test be run? */
+	public boolean isLatencyTestEnabled()
 	{
 		return this.runLatencyTest;
 	}
 
+	/** Are we using the immediate callback mode? (default to true) */
+	public boolean isImmediateCallback()
+	{
+		return this.isImmediateCallbackMode;
+	}
+
+	/** Are we using the evoked callback mode? (default to false) */
+	public boolean isEvokedCallback()
+	{
+		return this.isImmediateCallbackMode == false;
+	}
+	
 	public boolean getPrintEventLog()
 	{
 		return this.printEventLog;
@@ -303,14 +322,6 @@ public class Configuration
 				continue;
 			}
 
-			if( argument.startsWith("--loop-wait") )
-			{
-				validateArgIsValue( argument, args[count+1] );
-				this.loopWait = Integer.parseInt( args[count+1] );
-				count += 2;
-				continue;
-			}
-			
 			if( argument.startsWith("--peers") )
 			{
 				validateArgIsValue( argument, args[count+1] );
@@ -336,6 +347,28 @@ public class Configuration
 				continue;
 			}
 			
+			if( argument.startsWith("--callback-immediate") )
+			{
+				this.isImmediateCallbackMode = true;
+				count++;
+				continue;
+			}
+
+			if( argument.startsWith("--callback-evoked") )
+			{
+				this.isImmediateCallbackMode = false;
+				count++;
+				continue;
+			}
+
+			if( argument.startsWith("--loop-wait") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.loopWait = Integer.parseInt( args[count+1] );
+				count += 2;
+				continue;
+			}
+
 			if( argument.startsWith("--print-event-log") )
 			{
 				this.printEventLog = true;
