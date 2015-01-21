@@ -367,6 +367,12 @@ public class Federate
 		{
 			logger.info( "Didn't destroy federation, federates still joined" );
 		}
+
+		/////////////////////////////
+		// disconnect from the RTI //
+		/////////////////////////////
+		// This lets the LRC clean things up
+		rtiamb.disconnect();
 	}
 
 	
