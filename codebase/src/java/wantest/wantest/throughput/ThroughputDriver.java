@@ -323,15 +323,18 @@ public class ThroughputDriver
 		// If we use IMMEDIATE callback mode - take a shallow breath every now and then
 		// If we use EVOKED callback mode - tick away!
 
-		if( configuration.isImmediateCallback() && (loopNumber % 4 == 0) )
+		if( configuration.isImmediateCallback() )
 		{
-			// so here's the deal - we pump out events so fast we can overwhelm the
-			// poor LRC. Every now and then, take an ever so slight breather to let
-			// it catch up
-// TODO fix me
-// disabled line for now
-// oddly enough - just doing the mod operation sucks up enough time :S
-//			Utils.sleep( 0, 10000 ); // 10 micros - dependent on timer resolution
+			if( loopNumber % 4 == 0 )
+			{
+				// so here's the deal - we pump out events so fast we can overwhelm the
+				// poor LRC. Every now and then, take an ever so slight breather to let
+				// it catch up
+
+				// disabled line for now
+				// oddly enough - just doing the mod operation sucks up enough time :S
+				// Utils.sleep( 0, 10000 ); // 10 micros - dependent on timer resolution
+			}
 		}
 		else
 		{
