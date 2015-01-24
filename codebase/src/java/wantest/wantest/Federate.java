@@ -285,7 +285,10 @@ public class Federate
 		{
 			// let the RTI work for a bit while we wait to discover the
 			// objects registered by the remote federates
-			rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
+			if( configuration.isImmediateCallback() )
+				Utils.sleep( 500 );
+			else
+				rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
 
 			// check to see who turned up
 			for( TestFederate federate : storage.getPeers() )

@@ -58,14 +58,26 @@ public class Main
 			// that they have the proper name and peer list
 			List<String> peers = new ArrayList<String>( allFederates );
 			peers.remove( name );
-			Configuration local = configuration.copy( name, peers );
+			final Configuration local = configuration.copy( name, peers );
 			
 			// set us up as the master if that is the case
 			if( masterFederate.equals(name) )
 				local.setJvmMaster( true );
 			
 			// run the thing
-			FederateRunner runner = new FederateRunner( local );
+			Runnable runner = new Runnable()
+			{
+				public void run()
+				{
+					try
+					{
+						new Federate(local).execute();
+					}
+					catch( Exception e ){ e.printStackTrace(); }
+				}
+			};
+			
+			//FederateRunner runner = new FederateRunner( local );
 			Thread thread = new Thread( runner, name );
 			thread.start();
 		}
@@ -86,28 +98,4 @@ public class Main
 			new Federate(configuration).execute();
 	}
 	
-
-	///////////////////////////////////////////////////////////////////////////////////
-	////////////// Private Inner Class: FederateThread ////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////
-	public class FederateRunner implements Runnable
-	{
-		private Configuration configuration;
-		public FederateRunner( Configuration configuration )
-		{
-			this.configuration = configuration;
-		}
-		
-		public void run()
-		{
-			try
-			{
-				new Federate(configuration).execute();
-			}
-			catch( Exception e )
-			{
-				e.printStackTrace();
-			}
-		}
-	}
 }

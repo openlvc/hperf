@@ -499,6 +499,7 @@ public class ThroughputDriver implements IDriver
 	{
 		return "Throughput Test";
 	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
