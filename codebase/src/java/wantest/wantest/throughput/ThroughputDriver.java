@@ -165,10 +165,10 @@ public class ThroughputDriver
 				int sentPerSecond     = (int)(sentCount / seconds);
 				
 				// throughput per second
-				int totalbytes  = receivedCount * packetSize;
+				long totalbytes     = (long)receivedCount * (long)packetSize;
 				String receivedmbps = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
-				totalbytes      = sentCount * packetSize;
-				String sentmbps = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
+				totalbytes          = (long)sentCount * (long)packetSize;
+				String sentmbps     = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
 
 				// log it all for the people
 				String msg = "Finished loop %-7d -- %5dms, %6d received (%5d/s), %10s -- %6d sent (%5d/s), %10s";

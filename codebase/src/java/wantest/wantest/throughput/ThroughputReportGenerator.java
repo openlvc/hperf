@@ -309,7 +309,7 @@ public class ThroughputReportGenerator
 		                             allEvents.count,
 		                             allEvents.getAvgThroughputString(runtime),
 		                             allEvents.getTotalThroughputString(),
-		                             runtime );
+		                             (int)(allEvents.count/(runtime/1000)) );
 		logger.info( line );
 		logger.info( "     ------------------------------------------------" );		
 	}
