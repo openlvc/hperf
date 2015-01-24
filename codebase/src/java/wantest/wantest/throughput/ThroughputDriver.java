@@ -106,8 +106,22 @@ public class ThroughputDriver
 		logger.info( " ===================================" );
 		logger.info( " =     Running Throughput Test     =" );
 		logger.info( " ===================================" );
-		String sizeString = Utils.getSizeString( configuration.getPacketSize() );
-		logger.info( "Minimum message size="+sizeString );
+		
+		int loops = configuration.getLoopCount();
+		int objects = configuration.getObjectCount();
+		int packetSize = configuration.getPacketSize();
+		long sendSize = (long)objects * (long)2 * (long)loops * (long)packetSize;
+		long revcSize = sendSize * configuration.getPeers().size();
+		logger.info( "" );
+		logger.info( "  Min Messsage Size = "+Utils.getSizeString(packetSize) );
+		logger.info( "         Loop Count = "+configuration.getLoopCount() );
+		logger.info( "       Object Count = "+configuration.getObjectCount() );
+		logger.info( "  Messages Per Loop = "+objects*2+" ("+objects+" updates, "+objects+" interactions)" );
+		logger.info( "     Total Messages = "+objects*2 * loops );
+		logger.info( "              Peers = "+configuration.getPeers().size() );
+		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,1) );
+		logger.info( "    Total Revc Size = "+Utils.getSizeString(revcSize,1) );
+		logger.info( "" );
 
 		// Register test objects
 		this.registerObjects();
@@ -151,14 +165,13 @@ public class ThroughputDriver
 				int sentPerSecond     = (int)(sentCount / seconds);
 				
 				// throughput per second
-				int packetSize      = configuration.getPacketSize();
-				int totalbytes      = receivedCount * packetSize;
-				String receivedmbps = Utils.getSizeString( totalbytes / seconds, 2 );
+				int totalbytes  = receivedCount * packetSize;
+				String receivedmbps = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
 				totalbytes      = sentCount * packetSize;
-				String sentmbps = Utils.getSizeString( totalbytes / seconds, 2 );
+				String sentmbps = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
 
 				// log it all for the people
-				String msg = "Finished loop %-7d -- %5dms, %6d received (%d/s), %s -- %6d sent (%d/s), %s";
+				String msg = "Finished loop %-7d -- %5dms, %6d received (%5d/s), %10s -- %6d sent (%5d/s), %10s";
 				logger.info( String.format(msg, i, duration, receivedCount, receivedPerSecond,
 				                           receivedmbps, sentCount, sentPerSecond, sentmbps) );
 				

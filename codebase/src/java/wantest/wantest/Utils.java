@@ -105,25 +105,31 @@ public class Utils
 	 */
 	public static String getSizeString( long size )
 	{
-		double totalkb = size / 1024;
-		double totalmb = totalkb / 1024;
-		double totalgb = totalmb / 1024;
-		if( totalgb > 1 )
-			return totalgb+"GB";
-		else if( totalmb > 1 )
-			return totalmb+"MB";
-		else if( totalkb > 1 )
-			return totalkb+"KB";
-		else
-			return size+"B";
+		return getSizeString( size, 2 );
 	}
-
-	public static String getSizeString( double bytes, int decimalPlaces )
+	
+	public static String getSizeString( long bytes, int decimalPlaces )
 	{
 		// let's see how much we have so we can figure out the right qualifier
-		double totalkb = bytes / 1024;
-		double totalmb = totalkb / 1024;
-		double totalgb = totalmb / 1024;
+		double totalkb = bytes / 1000;
+		double totalmb = totalkb / 1000;
+		double totalgb = totalmb / 1000;
+		if( totalgb >= 1 )
+			return String.format( "%4."+decimalPlaces+"fGB", totalgb );
+		else if( totalmb >= 1 )
+			return String.format( "%4."+decimalPlaces+"fMB", totalmb );
+		else if( totalkb >= 1 )
+			return String.format( "%4."+decimalPlaces+"fKB", totalkb );
+		else
+			return bytes+"b";
+	}
+
+	public static String getSizeStringPerSec( double bytes, int decimalPlaces )
+	{
+		// let's see how much we have so we can figure out the right qualifier
+		double totalkb = bytes / 1000;
+		double totalmb = totalkb / 1000;
+		double totalgb = totalmb / 1000;
 		if( totalgb > 1 )
 			return String.format( "%5."+decimalPlaces+"fGB/s", totalgb );
 		else if( totalmb > 1 )

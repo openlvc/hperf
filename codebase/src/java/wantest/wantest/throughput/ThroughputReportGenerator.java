@@ -283,16 +283,16 @@ public class ThroughputReportGenerator
 		logger.info( "" );
 		logger.info( " === Test Distribution ===" );
 		logger.info( "" );		
-		logger.info( "     --------------------------------------------|" );
-		logger.info( "     |        | Throughput            |          |" );
-		logger.info( "     | Events | Per-Second | Total    |   Msg/s  |" );
-		logger.info( "     |--------|------------|----------|----------|" );
-	  //logger.info( "  12s| 100000 |  123.4MB/s | 1234.5MB |  10000/s |" );
-	  //logger.info( "     ---------------------------------------------" );
+		logger.info( "     -----------------------------------------------|" );
+		logger.info( "     |          | Throughput            |           |" );
+		logger.info( "     | Events   | Per-Second | Total    |   Msg/s   |" );
+		logger.info( "     |----------|------------|----------|-----------|" );
+	  //logger.info( "  12s| 10000000 |  123.4MB/s | 1234.5MB |  100000/s |" );
+	  //logger.info( "     ------------------------------------------------" );
 		for( int i = 0; i < distribution.length; i++ )
 		{
 			Period period = distribution[i];
-			String line = String.format( " %3ds| %6d |  %.9s | %.8s | %6d/s |",
+			String line = String.format( " %3ds| %8d |  %.9s | %.8s |  %6d/s |",
 			                             (i+1),
 			                             period.count,
 			                             period.getAvgThroughputString(1000),
@@ -302,16 +302,16 @@ public class ThroughputReportGenerator
 			logger.info( line );
 		}
 
-		logger.info( "     ---------------------------------------------" );
+		logger.info( "     ------------------------------------------------" );
 		
 		// log the information for the full dataset
-		String line = String.format( "  All| %6d |  %.9s | %.8s | %6d/s |",
+		String line = String.format( "  All| %8d |  %.9s | %.8s |  %6d/s |",
 		                             allEvents.count,
 		                             allEvents.getAvgThroughputString(runtime),
 		                             allEvents.getTotalThroughputString(),
-		                             (int)(allEvents.count/totalSeconds) );
+		                             runtime );
 		logger.info( line );
-		logger.info( "     ---------------------------------------------" );		
+		logger.info( "     ------------------------------------------------" );		
 	}
 
 	/**
@@ -445,15 +445,12 @@ public class ThroughputReportGenerator
 		
 		public String getAvgThroughputString( long periodmillis )
 		{
-			// datasize is stored in bytes
-			// we want to return string like:
-			//   123.45KB/s
-			//   123.45MB/s
-			
-			// let's see how much we have so we can figure out the right qualifier
-			double totalkb = datasize / 1024;
-			double totalmb = totalkb / 1024;
-			double totalgb = totalmb / 1024;
+			// We already have conversion methods, but I want to define
+			// specific widths and don't want to see "0b" as a string. We'll
+			// stop at KB here and always put it in the decimal point format.
+			double totalkb = datasize / 1000;
+			double totalmb = totalkb / 1000;
+			double totalgb = totalmb / 1000;
 			double kbs = (totalkb / periodmillis) * 1000;
 			double mbs = (totalmb / periodmillis) * 1000;
 			double gbs = (totalgb / periodmillis) * 1000;
@@ -467,15 +464,12 @@ public class ThroughputReportGenerator
 		
 		public String getTotalThroughputString()
 		{
-			// datasize is stored in bytes
-			// we want to return string like:
-			//   123.45KB
-			//   123.45MB
-			
-			// let's see how much we have so we can figure out the right qualifier
-			double kbs = datasize / 1024;
-			double mbs = kbs / 1024;
-			double gbs = mbs / 1024;
+			// We already have conversion methods, but I want to define
+			// specific widths and don't want to see "0b" as a string. We'll
+			// stop at KB here and always put it in the decimal point format.
+			double kbs = datasize / 1000;
+			double mbs = kbs / 1000;
+			double gbs = mbs / 1000;
 			if( gbs > 1 )
 				return String.format( "%6.1fGB", gbs );
 			else if( mbs > 1 )
