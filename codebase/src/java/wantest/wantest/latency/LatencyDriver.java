@@ -31,6 +31,7 @@ import wantest.IDriver;
 import wantest.Storage;
 import wantest.Utils;
 import wantest.config.Configuration;
+import wantest.config.LoggingConfigurator;
 import wantest.events.LatencyEvent;
 
 public class LatencyDriver implements IDriver
@@ -65,7 +66,7 @@ public class LatencyDriver implements IDriver
 	                     Storage storage )
 	    throws RTIexception
 	{
-		logger = Logger.getLogger( "wantest" );
+		logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
 		this.configuration = configuration;
 		this.rtiamb = rtiamb;
 		this.fedamb = fedamb;

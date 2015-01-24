@@ -32,6 +32,7 @@ import wantest.Storage;
 import wantest.TestFederate;
 import wantest.Utils;
 import wantest.config.Configuration;
+import wantest.config.LoggingConfigurator;
 import wantest.events.DiscoverEvent;
 import wantest.events.Event;
 import wantest.events.Event.Type;
@@ -60,7 +61,7 @@ public class ThroughputReportGenerator
 	//----------------------------------------------------------
 	public ThroughputReportGenerator( Configuration configuration, Storage storage )
 	{
-		this.logger = Logger.getLogger( "wantest" );
+		this.logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
 		this.configuration = configuration;
 		this.storage = storage;
 	}

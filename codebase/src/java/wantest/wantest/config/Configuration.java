@@ -44,6 +44,8 @@ public class Configuration
 	// federate settings
 	private String federationName;
 	private String federateName;
+	private boolean jvmFederation;
+	private boolean jvmMaster; // is this the "master" federate?
 	
 	// execution properties
 	private int loopCount;
@@ -71,8 +73,10 @@ public class Configuration
 		this.loglevel = "INFO";
 		
 		// federate settings
-		this.federationName = "WAN Test Federation";
+		this.federationName = "test-fed";
 		this.federateName = "wantest1";
+		this.jvmFederation = false;
+		this.jvmMaster = false;
 		
 		// execution properties
 		this.loopCount = 20;
@@ -98,6 +102,43 @@ public class Configuration
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+	/**
+	 * Make a copy of this configuration. We do this to support the execution of JVM
+	 * federations, where we take a single configuration in, but need to generate a
+	 * unique one for each federate.
+	 */
+	public Configuration copy( String federateName, List<String> peers )
+	{
+		Configuration temp = new Configuration();
+		temp.configurationFile = this.configurationFile;
+		temp.loglevel = this.loglevel;
+		
+		// federate settings
+		temp.federationName = this.federationName;
+		temp.federateName = federateName;
+		temp.jvmFederation = this.jvmFederation;
+		temp.jvmMaster = this.jvmMaster;
+		
+		// execution properties
+		temp.loopCount = this.loopCount;
+		temp.loopWait = this.loopWait;
+		temp.objectCount = this.objectCount;
+		temp.packetSize = this.packetSize;
+		temp.validateData = this.validateData;
+		temp.peers = peers;
+
+		// default to run neither test unless instructed
+		temp.runThroughputTest = this.runThroughputTest;
+		temp.runLatencyTest = this.runLatencyTest;
+		
+		// what is our callback mode? Immediate or Evoked?
+		temp.isImmediateCallbackMode = this.isImmediateCallbackMode;
+		
+		temp.printEventLog = this.printEventLog;
+		temp.csvFile = this.csvFile;
+		
+		return temp;
+	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
@@ -125,7 +166,23 @@ public class Configuration
 		return this.federateName;
 	}
 	
+	public boolean isJvmFederation()
+	{
+		return this.jvmFederation;
+	}
 
+	/** Is this the "master" federate for a JVM federation. If so, this is
+	    the only one that should do any logging */
+	public boolean isJvmMaster()
+	{
+		return this.jvmMaster;
+	}
+	
+	public void setJvmMaster( boolean master )
+	{
+		this.jvmMaster = master;
+	}
+	
 	// Execution Properties
 	/**
 	 * The number of times we'll loop before leaving the federation
@@ -251,6 +308,7 @@ public class Configuration
     		--packet-size 32B/KB/MB
     		--loop-wait 100
     		--print-event-log
+    		--jvm
 		*/
 
 		int count = 0;
@@ -291,6 +349,13 @@ public class Configuration
 				validateArgIsValue( argument, args[count+1] );
 				this.federationName = args[count+1];
 				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--jvm") )
+			{
+				this.jvmFederation = true;
+				count++;
 				continue;
 			}
 			

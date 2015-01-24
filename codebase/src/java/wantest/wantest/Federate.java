@@ -33,13 +33,12 @@ import hla.rti1516e.ResignAction;
 import hla.rti1516e.RtiFactoryFactory;
 import hla.rti1516e.exceptions.*;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import static wantest.Handles.*;
 import wantest.config.Configuration;
+import wantest.config.LoggingConfigurator;
 import wantest.latency.LatencyDriver;
 import wantest.throughput.ThroughputDriver;
 
@@ -63,12 +62,11 @@ public class Federate
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public Federate( String[] args )
+	public Federate( Configuration configuration )
 	{
 		// logging and configuration
+		this.configuration = configuration;
 		initializeLogging();
-		this.configuration = new Configuration();
-		this.configuration.loadCommandLine( args );
 
 		this.rtiamb = null; // created during createAndJoinFederate()
 		this.fedamb = null; // created during createAndJoinFederate()
@@ -120,16 +118,13 @@ public class Federate
 	 */
 	private void initializeLogging()
 	{
-		this.logger = Logger.getLogger( "wantest" ); 
+		LoggingConfigurator.initializeLogging();
+		this.logger = LoggingConfigurator.getLogger( configuration.getFederateName() ); 
 		this.logger.setLevel( Level.INFO );
 
-		// create the appender
-		PatternLayout layout = new PatternLayout( "%-5p [%t] %c: %x%m%n" );
-		ConsoleAppender appender = new ConsoleAppender( layout, ConsoleAppender.SYSTEM_OUT );
-		appender.setThreshold( Level.TRACE ); // output restricted at logger level, not appender
-
-		// attach the appender		
-		logger.addAppender( appender );
+		// this is a jvm federation, but we are not the master, so no logger for us
+		if( configuration.isJvmFederation() && !configuration.isJvmMaster() )
+			this.logger.setLevel( Level.OFF );
 	}
 
 	private IDriver loadDriver() throws Exception

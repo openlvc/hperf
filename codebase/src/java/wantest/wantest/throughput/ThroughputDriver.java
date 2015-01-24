@@ -37,6 +37,7 @@ import wantest.TestFederate;
 import wantest.TestObject;
 import wantest.Utils;
 import wantest.config.Configuration;
+import wantest.config.LoggingConfigurator;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.ParameterHandleValueMap;
@@ -101,7 +102,7 @@ public class ThroughputDriver implements IDriver
 	                     Storage storage )
 		throws RTIexception
 	{
-		logger = Logger.getLogger( "wantest" );
+		logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
 		this.configuration = configuration;
 		this.rtiamb = rtiamb;
 		this.fedamb = fedamb;
