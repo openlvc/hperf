@@ -370,38 +370,42 @@ public class ThroughputDriver
 		// Get out own collection of all our peers that we can modify
 		// As we encounter one that is finished, we'll remove it. When
 		// they're all gone - everyone has finished!
-		List<TestFederate> notfinished = new ArrayList<TestFederate>( storage.getPeers() );
+		//
+		// Value of this map is an int array where [0] = recv count at last check, [1] = lives
+		// If the recv count does not increase for a tick, a live is deducted. When a federate
+		// is out of lives, we remove it from the list of federates we're waiting for
+		Map<TestFederate,Integer[]> notfinished = new HashMap<TestFederate,Integer[]>();
+		for( TestFederate federate : storage.getPeers() )
+			notfinished.put( federate, new Integer[]{ 0,5 } );
 
 		// For each object, we expect loopNumber events + the discover event
 		int targetCount = configuration.getLoopCount() + 1;
 		
-		// Look - sometimes packets go wrong. Let's not wait forever - let's give them X many go's
-		int remainingLives = 5;
-		
 		// let's see what the state of things is
 		while( notfinished.isEmpty() == false )
 		{
-			if( --remainingLives == 0 )
-			{
-				logger.info( "Waited too long - these events clearly aren't coming, dropped packets" );
-				break;
-			}
-			
+			// wait/tick for a little bit to let more events filter in
+			if( configuration.isImmediateCallback() )
+				Utils.sleep( 1000, 0 );
+			else
+				rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
+
+			// loop through each federate to see if we have all the messages
 			for( TestFederate federate : storage.getPeers() )
 			{
 				// assume they are finished - catch them out if they're not
-				boolean finished = true;
+				boolean federateIsFinished = true;
 				for( TestObject object : federate.getObjects() )
 				{
 					if( object.getEventCount() != targetCount )
 					{
 						// their even count does not match what we expect - they're not done
-						finished = false;
+						federateIsFinished = false;
 						break;
 					}
 				}
 				
-				if( finished )
+				if( federateIsFinished )
 				{
 					logger.info( "Received all updates for ["+federate.getFederateName()+"]: "+
 					             federate.getEventCount()+" (total: "+storage.getThroughputEvents().size()+")" );
@@ -409,16 +413,29 @@ public class ThroughputDriver
 				}
 				else
 				{
-					logger.info( "Waiting for ["+federate.getFederateName()+"]: "+
-			             federate.getEventCount()+" (total: "+storage.getThroughputEvents().size()+")" );
+					// check to see if we're out of lives
+					Integer[] vitals = notfinished.get( federate );
+					int eventCount = federate.getEventCount();
+					int lastCount = notfinished.get(federate)[0];
+					if( (eventCount > lastCount) == false )
+						vitals[1] = vitals[1]-1;
+					
+					// give up on this one
+					if( vitals[1] > 0 )
+					{
+						logger.info( "Waiting for ["+federate.getFederateName()+"]: "+
+					                 federate.getEventCount()+
+					                 " events ("+storage.getThroughputEvents().size()+" total events)" );
+					}
+					else
+					{
+						notfinished.remove( federate );
+						logger.info( "Waited too long for ["+federate.getFederateName()+
+						             "] - these events clearly aren't coming, dropped packets" );
+					}
 				}
 			}
 			
-			// wait/tick for a little bit to let more events filter in
-			if( configuration.isImmediateCallback() )
-				Utils.sleep( 1000, 0 );
-			else
-				rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
 		}		
 		
 		logger.info( "All finished - synchronizing" );
