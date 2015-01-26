@@ -39,6 +39,7 @@ import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.time.HLAfloat64TimeFactory;
 
 public class ThroughputDriver
 {
@@ -57,6 +58,9 @@ public class ThroughputDriver
 	
 	private Map<ObjectInstanceHandle,TestObject> myObjects;
 	private byte[] payload;
+
+	// time factory for use if we are timestepped
+	private HLAfloat64TimeFactory timeFactory;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -104,23 +108,12 @@ public class ThroughputDriver
 		logger.info( " ===================================" );
 		logger.info( " =     Running Throughput Test     =" );
 		logger.info( " ===================================" );
-		
-		int loops = configuration.getLoopCount();
-		int objects = configuration.getObjectCount();
-		int packetSize = configuration.getPacketSize();
-		long sendSize = (long)objects * (long)2 * (long)loops * (long)packetSize;
-		long revcSize = sendSize * configuration.getPeers().size();
-		logger.info( "" );
-		logger.info( "  Min Messsage Size = "+Utils.getSizeString(packetSize) );
-		logger.info( "         Loop Count = "+configuration.getLoopCount() );
-		logger.info( "       Object Count = "+configuration.getObjectCount() );
-		logger.info( "  Messages Per Loop = "+objects*2+" ("+objects+" updates, "+objects+" interactions)" );
-		logger.info( "     Total Messages = "+objects*2 * loops );
-		logger.info( "              Peers = "+configuration.getPeers().size() );
-		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,1) );
-		logger.info( "    Total Revc Size = "+Utils.getSizeString(revcSize,1) );
-		logger.info( "" );
+		printHeader();
 
+		// Enable time policy if we use it
+		if( configuration.isTimestepped() )
+			this.enableTimePolicy();
+		
 		// Register test objects
 		this.registerObjects();
 		
@@ -136,6 +129,7 @@ public class ThroughputDriver
 		// timestamp the last time we passed the threshold                          //
 		//////////////////////////////////////////////////////////////////////////////
 		int batchSize = getBatchSize();
+		int packetSize = configuration.getPacketSize();
 		int lastEventCount = 0;
 		long lastTimestamp = System.nanoTime();
 
@@ -143,10 +137,14 @@ public class ThroughputDriver
 		this.storage.startThroughputTestTimer();
 		for( int i = 1; i <= configuration.getLoopCount(); i++ )
 		{
-			// Do the actual work
+			////////////////////////
+			// Do the actual work //
+			////////////////////////
 			loop( i );
 
-			// Log some summary information every now and then
+			/////////////////////////////////////////////////////
+			// Log some summary information every now and then //
+			/////////////////////////////////////////////////////
 			// Well, that got out of hand. One line to loop, a bajillion to watch when we start/stop
 			if( i % batchSize == 0 && i != 0 )
 			{
@@ -199,6 +197,40 @@ public class ThroughputDriver
 		{
 			return (int)Math.ceil( configuration.getLoopCount() * 0.1 );
 		}
+	}
+
+	private void printHeader()
+	{
+		int loops = configuration.getLoopCount();
+		int objects = configuration.getObjectCount();
+		int packetSize = configuration.getPacketSize();
+		long sendSize = (long)objects * (long)2 * (long)loops * (long)packetSize;
+		long revcSize = sendSize * configuration.getPeers().size();
+		logger.info( "" );
+		logger.info( "  Min Messsage Size = "+Utils.getSizeString(packetSize) );
+		logger.info( "         Loop Count = "+configuration.getLoopCount() );
+		logger.info( "       Object Count = "+configuration.getObjectCount() );
+		logger.info( "  Messages Per Loop = "+objects*2+" ("+objects+" updates, "+objects+" interactions)" );
+		logger.info( "     Total Messages = "+objects*2 * loops );
+		logger.info( "              Peers = "+configuration.getPeers().size() );
+		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,1) );
+		logger.info( "    Total Revc Size = "+Utils.getSizeString(revcSize,1) );
+		logger.info( "" );
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////// Time Policy Methods ///////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+	private void enableTimePolicy() throws RTIexception
+	{
+		this.timeFactory = (HLAfloat64TimeFactory)rtiamb.getTimeFactory();
+
+		// turn on the time policy
+		rtiamb.enableTimeConstrained();
+		rtiamb.enableTimeRegulation( timeFactory.makeInterval(1.0) );
+		while( fedamb.timeConstrained == false || fedamb.timeRegulating == false )
+			tickOrSleep( 500 );
+
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +289,7 @@ public class ThroughputDriver
 		
 		// wait for everyone to do the same
 		while( fedamb.startThroughputTest == false )
-			rtiamb.evokeMultipleCallbacks( 0.1, 1.0 );
+			tickOrSleep( 500 );
 	}
 
 	/**
@@ -291,7 +323,7 @@ public class ThroughputDriver
 				}		
 			}
 
-			rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
+			tickOrSleep( 500 );
 
 		} while( allObjectsReady == false );
 
@@ -331,23 +363,18 @@ public class ThroughputDriver
 		////////////////////////////////////////////////////
 		// give some time over to process incoming events //
 		////////////////////////////////////////////////////
-		// If we use IMMEDIATE callback mode - take a shallow breath every now and then
+		// If we use IMMEDIATE callback mode - do nothing, we'll get callbacks automatically
 		// If we use EVOKED callback mode - tick away!
-
-		if( configuration.isImmediateCallback() )
+		// If we use TIMESTEPPING - request an advance and then wait until we get it
+		if( configuration.isTimestepped() )
 		{
-			if( loopNumber % 4 == 0 )
-			{
-				// so here's the deal - we pump out events so fast we can overwhelm the
-				// poor LRC. Every now and then, take an ever so slight breather to let
-				// it catch up
-
-				// disabled line for now
-				// oddly enough - just doing the mod operation sucks up enough time :S
-				// Utils.sleep( 0, 10000 ); // 10 micros - dependent on timer resolution
-			}
+			// Tick until we get the advance grant
+			long requestedTime = fedamb.currentTime + 1;
+			rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
+			while( fedamb.currentTime < requestedTime )
+				tickOrSleep( configuration.getLoopWait() );
 		}
-		else
+		else if( configuration.isEvokedCallback() )
 		{
 			// Tick for at least the loopWait time, but no longer four times
 			// its value. We'll only continue to be held if there are messages
@@ -383,10 +410,7 @@ public class ThroughputDriver
 		while( notfinished.isEmpty() == false )
 		{
 			// wait/tick for a little bit to let more events filter in
-			if( configuration.isImmediateCallback() )
-				Utils.sleep( 1000, 0 );
-			else
-				rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
+			tickOrSleep( 2000 );
 
 			// loop through each federate to see if we have all the messages
 			for( TestFederate federate : storage.getPeers() )
@@ -439,11 +463,24 @@ public class ThroughputDriver
 		logger.info( "All finished - synchronizing" );
 		rtiamb.synchronizationPointAchieved( "FINISH_THROUGHPUT_TEST" );
 		while( fedamb.finishedThroughputTest == false )
-		{
-			rtiamb.evokeMultipleCallbacks( 0.5, 0.5 );
-		}
+			tickOrSleep( 500 );
 	}
-	
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	//                                    Utility Methods                                    //
+	///////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Depending on whether we are using the immediate callback processor, or are in a 
+	 * ticking mode, either sleep or tick for at least the given number of millis
+	 */
+	private void tickOrSleep( long millis ) throws RTIexception
+	{
+		if( configuration.isImmediateCallback() )
+			Utils.sleep( millis );
+		else
+			rtiamb.evokeMultipleCallbacks( (millis*1000), (millis*1000) );
+	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

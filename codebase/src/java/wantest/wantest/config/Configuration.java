@@ -56,6 +56,7 @@ public class Configuration
 	private boolean runThroughputTest;
 	private boolean runLatencyTest;
 	private boolean isImmediateCallbackMode;
+	private boolean isTimestepped;
 
 	private boolean printEventLog;
 	private String csvFile;
@@ -85,7 +86,8 @@ public class Configuration
 		this.runLatencyTest = false;
 		
 		// what is our callback mode? Immediate or Evoked?
-		this.isImmediateCallbackMode = true; 
+		this.isImmediateCallbackMode = true;
+		this.isTimestepped = false;
 		
 		this.printEventLog = false;
 		this.csvFile = null;
@@ -203,6 +205,12 @@ public class Configuration
 	public boolean isEvokedCallback()
 	{
 		return this.isImmediateCallbackMode == false;
+	}
+
+	/** Should the federate use timestepping? Latency federate always will */
+	public boolean isTimestepped()
+	{
+		return this.isTimestepped;
 	}
 	
 	public boolean getPrintEventLog()
@@ -357,6 +365,13 @@ public class Configuration
 			if( argument.startsWith("--callback-evoked") )
 			{
 				this.isImmediateCallbackMode = false;
+				count++;
+				continue;
+			}
+			
+			if( argument.startsWith("--timestepped") )
+			{
+				this.isTimestepped = true;
 				count++;
 				continue;
 			}
