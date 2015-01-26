@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import wantest.FederateAmbassador;
+import wantest.IDriver;
 import wantest.Storage;
 import wantest.TestFederate;
 import wantest.TestObject;
@@ -41,7 +42,7 @@ import hla.rti1516e.RTIambassador;
 import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 
-public class ThroughputDriver
+public class ThroughputDriver implements IDriver
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -183,6 +184,9 @@ public class ThroughputDriver
 
 		logger.info( "Throughput test finished" );
 		logger.info( "" );
+		
+		// Print the report
+		new ThroughputReportGenerator(configuration,storage).printReport();
 	}
 
 	/** We print out stats every so often during a run. This method determines how often.
@@ -190,13 +194,9 @@ public class ThroughputDriver
 	private int getBatchSize()
 	{
 		if( configuration.getLoopCount() > 100000 )
-		{
 			return 10000;
-		}
 		else
-		{
 			return (int)Math.ceil( configuration.getLoopCount() * 0.1 );
-		}
 	}
 
 	private void printHeader()
@@ -481,6 +481,10 @@ public class ThroughputDriver
 			rtiamb.evokeMultipleCallbacks( (millis*1000), (millis*1000) );
 	}
 
+	public String getName()
+	{
+		return "Throughput Test";
+	}
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

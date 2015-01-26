@@ -32,13 +32,14 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import static wantest.Handles.*;
 import wantest.FederateAmbassador;
+import wantest.IDriver;
 import wantest.Storage;
 import wantest.TestFederate;
 import wantest.Utils;
 import wantest.config.Configuration;
 import wantest.events.LatencyEvent;
 
-public class LatencyDriver
+public class LatencyDriver implements IDriver
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -108,6 +109,9 @@ public class LatencyDriver
 
 		logger.info( "Latency Test Finished" );
 		logger.info( "" );
+		
+		// Print the report
+		new LatencyReportGenerator(storage).printReport();
 	}
 
 	/**
@@ -268,6 +272,11 @@ public class LatencyDriver
 			rtiamb.evokeMultipleCallbacks( 0.1, 1.0 );
 	}
 	
+	public String getName()
+	{
+		return "Latency Test";
+	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

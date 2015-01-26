@@ -41,9 +41,7 @@ import org.apache.log4j.PatternLayout;
 import static wantest.Handles.*;
 import wantest.config.Configuration;
 import wantest.latency.LatencyDriver;
-import wantest.latency.LatencyReportGenerator;
 import wantest.throughput.ThroughputDriver;
-import wantest.throughput.ThroughputReportGenerator;
 
 public class Federate
 {
@@ -60,9 +58,7 @@ public class Federate
 	private RTIambassador rtiamb;
 	private FederateAmbassador fedamb;
 	private Storage storage;
-	
-	private ThroughputDriver throughputDriver;
-	private LatencyDriver latencyDriver;
+	private IDriver driver;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -77,8 +73,7 @@ public class Federate
 		this.rtiamb = null; // created during createAndJoinFederate()
 		this.fedamb = null; // created during createAndJoinFederate()
 		this.storage = new Storage();
-		this.throughputDriver = new ThroughputDriver();
-		this.latencyDriver = new LatencyDriver();
+		this.driver = null; // created during execute()
 	}
 
 	//----------------------------------------------------------
@@ -88,13 +83,11 @@ public class Federate
 	// main test federate execution process
 	public void execute() throws Exception
 	{
-		// Check to make sure we have a test to run
-		if( !configuration.isThroughputTestEnabled() && !configuration.isLatencyTestEnabled() )
-			throw new Exception( "You must specify at least --throughput-test or --latency-test" );
+		// load the appropriate driver
+		this.driver = loadDriver();
 		
 		logger.info( "" );
-		logger.info( "Throughput Test: "+configuration.isThroughputTestEnabled() );
-		logger.info( "   Latency Test: "+configuration.isLatencyTestEnabled() );
+		logger.info( "    Test Driver: "+driver.getName() );
 		logger.info( "  Callback Mode: "+(configuration.isImmediateCallback() ? "IMMEDIATE":"EVOKED") );
 		logger.info( "" );
 		
@@ -116,21 +109,7 @@ public class Federate
 		/////////////////////////
 		// Main test execution //
 		/////////////////////////
-		// Hand off execution to the specific test executors
-		if( configuration.isThroughputTestEnabled() )
-			throughputDriver.execute( configuration, rtiamb, fedamb, storage );
-		
-		if( configuration.isLatencyTestEnabled() )
-			latencyDriver.execute( configuration, rtiamb, fedamb, storage );
-
-		// Print the reports -- we do this after both tests have run
-		// so that all the output is delivered together at the end of testing
-		if( configuration.isThroughputTestEnabled() )
-			new ThroughputReportGenerator(configuration,storage).printReport();
-		
-		if( configuration.isLatencyTestEnabled() )
-			new LatencyReportGenerator(storage).printReport();		
-
+		this.driver.execute( configuration, rtiamb, fedamb, storage );
 
 		// Get out of here
 		this.resignAndDestroy();
@@ -151,6 +130,16 @@ public class Federate
 
 		// attach the appender		
 		logger.addAppender( appender );
+	}
+
+	private IDriver loadDriver() throws Exception
+	{
+		if( configuration.isThroughputTestEnabled() )
+			return new ThroughputDriver();
+		else if( configuration.isLatencyTestEnabled() )
+			return new LatencyDriver();
+		else
+			throw new Exception( "You must specify at least --throughput-test or --latency-test" );
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////
