@@ -22,8 +22,10 @@ package wantest.throughput;
 
 import static wantest.Handles.*;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -180,7 +182,6 @@ public class ThroughputDriver implements IDriver
 
 		// Wait for everyone to finish their stuff
 		this.waitForFinish();
-		this.storage.stopThroughputTestTimer();
 
 		logger.info( "Throughput test finished" );
 		logger.info( "" );
@@ -388,79 +389,91 @@ public class ThroughputDriver implements IDriver
 	////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////// Ready to Finish //////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * For each of our peers, loop through and see if we have received all of the messages we
+	 * are expecting. When we've accounted for all expected messages in all peers we try to
+	 * synchronize on the "finishing" point. We do this because in Portico, sync point messages
+	 * are delivered OOB, so they effectively queue jump, meaning we might exit before all
+	 * incoming reflections/interactions are processed and this would give inaccurate timings.
+	 * 
+	 * While we wait for all the federates to finish, we tick or sleep. Each loop through this
+	 * cycle we check to ensure that a federate is at least getting closer to its finishing
+	 * goal. If its count doesn't move for a number of successive checks, we declare that the
+	 * messages are never likely to come and remove them from the lsit of federates we are
+	 * waiting for.
+	 */
 	private void waitForFinish() throws RTIexception
 	{
 		logger.info( "Finished sending messages, waiting for everyone else" );
 
-		// Get out own collection of all our peers that we can modify
-		// As we encounter one that is finished, we'll remove it. When
-		// they're all gone - everyone has finished!
-		//
-		// Value of this map is an int array where [0] = recv count at last check, [1] = lives
-		// If the recv count does not increase for a tick, a live is deducted. When a federate
-		// is out of lives, we remove it from the list of federates we're waiting for
-		Map<TestFederate,Integer[]> notfinished = new HashMap<TestFederate,Integer[]>();
-		for( TestFederate federate : storage.getPeers() )
-			notfinished.put( federate, new Integer[]{ 0,5 } );
-
-		// For each object, we expect loopNumber events + the discover event
-		int targetCount = configuration.getLoopCount() + 1;
+		// number of events expected per federate
+		int expectedPerFederate = configuration.getObjectCount() +   /* discover events */
+		                         (configuration.getObjectCount() *   /* reflects + interactions */
+		                          configuration.getLoopCount() * 2);
 		
-		// let's see what the state of things is
+		// get a list of all peers - integer is how many messages we've received
+		Collection<TestFederate> notfinished = new ConcurrentLinkedQueue<TestFederate>( storage.getPeers() );
+		
+		int lastCount = 0;             // total event count last loop
+		int stagnentPeriods = 0;       // number of loops lastCount hasn't moved
+		long nextScheduledReport = 0;  // earliest time we should print waiting summary
 		while( notfinished.isEmpty() == false )
 		{
-			// wait/tick for a little bit to let more events filter in
-			tickOrSleep( 2000 );
-
-			// loop through each federate to see if we have all the messages
-			for( TestFederate federate : storage.getPeers() )
+			///////////////////////////////////////////////////////////////
+			// check each federate to see if we have all expected events //
+			///////////////////////////////////////////////////////////////
+			for( TestFederate federate : notfinished )
 			{
-				// assume they are finished - catch them out if they're not
-				boolean federateIsFinished = true;
-				for( TestObject object : federate.getObjects() )
+				int eventCount = federate.getEventCount();
+				boolean finished = eventCount >= expectedPerFederate;
+				if( finished )
 				{
-					if( object.getEventCount() != targetCount )
-					{
-						// their even count does not match what we expect - they're not done
-						federateIsFinished = false;
-						break;
-					}
-				}
-				
-				if( federateIsFinished )
-				{
-					logger.info( "Received all updates for ["+federate.getFederateName()+"]: "+
-					             federate.getEventCount()+" (total: "+storage.getThroughputEvents().size()+")" );
+					logger.info( "Received all updates for ["+federate+"]: "+federate.getEventCount() );
 					notfinished.remove( federate );
 				}
-				else
+			}
+
+			//////////////////////////////////////////////////////
+			// check to make sure we are still receiving events //
+			//////////////////////////////////////////////////////
+			int thisCount = storage.getThroughputEvents().size();
+			if( thisCount == lastCount )
+			{
+				stagnentPeriods++;
+				if( stagnentPeriods > 10 )
 				{
-					// check to see if we're out of lives
-					Integer[] vitals = notfinished.get( federate );
-					int eventCount = federate.getEventCount();
-					int lastCount = notfinished.get(federate)[0];
-					if( (eventCount > lastCount) == false )
-						vitals[1] = vitals[1]-1;
-					
-					// give up on this one
-					if( vitals[1] > 0 )
-					{
-						logger.info( "Waiting for ["+federate.getFederateName()+"]: "+
-					                 federate.getEventCount()+
-					                 " events ("+storage.getThroughputEvents().size()+" total events)" );
-					}
-					else
-					{
-						notfinished.remove( federate );
-						logger.info( "Waited too long for ["+federate.getFederateName()+
-						             "] - these events clearly aren't coming, dropped packets" );
-					}
+					// give up
+					logger.info( "Waited too long for federates "+notfinished+
+					             " - these events clearly aren't coming, dropped packets" );
+					break;
 				}
 			}
+			else
+			{
+				lastCount = thisCount;
+				stagnentPeriods = 0;
+			}
+
+			////////////////////////////////////////////////////////////////
+			// print a summary of who we're waiting for every two seconds //
+			////////////////////////////////////////////////////////////////
+			if( System.currentTimeMillis() > nextScheduledReport )
+			{
+				for( TestFederate federate : notfinished )
+				{
+					logger.info( "Waiting for ["+federate.getFederateName()+"]: "+
+					             (expectedPerFederate-federate.getEventCount())+" events to go" );
+				}
+				
+				nextScheduledReport = System.currentTimeMillis() + 2000;
+			}
 			
-		}		
+			// process a bit
+			tickOrSleep( 100 );
+		}
 		
 		logger.info( "All finished - synchronizing" );
+		storage.stopThroughputTestTimer();
 		rtiamb.synchronizationPointAchieved( "FINISH_THROUGHPUT_TEST" );
 		while( fedamb.finishedThroughputTest == false )
 			tickOrSleep( 500 );

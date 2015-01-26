@@ -236,6 +236,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 		                                                                   payload.length,
 		                                                                   receivedTimestamp );
 		storage.addThroughputEvent( event );
+		sender.addInteraction( event );
 	}
 
 	/**

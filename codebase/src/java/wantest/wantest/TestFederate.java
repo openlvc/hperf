@@ -25,6 +25,9 @@ import hla.rti1516e.ObjectInstanceHandle;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import wantest.events.ThroughputInteractionEvent;
 
 public class TestFederate implements Comparable<TestFederate>
 {
@@ -37,6 +40,7 @@ public class TestFederate implements Comparable<TestFederate>
 	//----------------------------------------------------------
 	private String federateName;
 	private Map<String,TestObject> objects;
+	private AtomicInteger interactionCount;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -45,6 +49,7 @@ public class TestFederate implements Comparable<TestFederate>
 	{
 		this.federateName = federateName;
 		this.objects = new HashMap<String,TestObject>();
+		this.interactionCount = new AtomicInteger(0);
 	}
 
 	//----------------------------------------------------------
@@ -54,6 +59,11 @@ public class TestFederate implements Comparable<TestFederate>
 	public void addObject( TestObject object )
 	{
 		this.objects.put( object.getName(), object );
+	}
+	
+	public void addInteraction( ThroughputInteractionEvent event )
+	{
+		interactionCount.incrementAndGet();
 	}
 	
 	public boolean containsObject( ObjectInstanceHandle handle )
@@ -108,7 +118,7 @@ public class TestFederate implements Comparable<TestFederate>
 
 	public int getEventCount()
 	{
-		int eventCount = 0;
+		int eventCount = interactionCount.get();
 		for( TestObject object : objects.values() )
 		{
 			eventCount += object.getEventCount();
