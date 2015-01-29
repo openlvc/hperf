@@ -57,7 +57,8 @@ public class LatencyDriver implements IDriver
 	// execution parameters
 	private double looptime; // time to tick while waiting
 	private byte[] payload;
-	private List<String> orderedPeers;
+	private List<String> orderedParticipants;
+	private int myParticipantIndex;
 	private HLAfloat64TimeFactory timeFactory;
 
 	//----------------------------------------------------------
@@ -83,14 +84,15 @@ public class LatencyDriver implements IDriver
 		// execution parameters
 		this.looptime = ((double)configuration.getLoopWait()) / 1000;
 		this.payload = Utils.generatePayload( configuration.getPacketSize() );
-		this.orderedPeers = createPeerList();
+		this.orderedParticipants = createParticipantList();
+		this.myParticipantIndex = orderedParticipants.indexOf( configuration.getFederateName() );
 
 		logger.info( " ================================" );
 		logger.info( " =     Running Latency Test     =" );
 		logger.info( " ================================" );
 		String sizeString = Utils.getSizeString( configuration.getPacketSize() );
 		logger.info( "Minimum message size="+sizeString );
-		logger.info( "Federate order: "+this.orderedPeers );
+		logger.info( "Federate order: "+this.orderedParticipants );
 		
 		// enable our time policy
 		this.enableTimePolicy();
@@ -101,7 +103,10 @@ public class LatencyDriver implements IDriver
 		// Loop
 		for( int i = 0; i < configuration.getLoopCount(); i++ )
 		{
-			loop( i+1 );
+			loop( i );
+
+			if( (i+1) % ((int)configuration.getLoopCount()*0.1) == 0 )
+				logger.info( "Finished loop ["+(i+1)+"]" );
 		}
 
 		// Confirm that everyone is ready to complete
@@ -118,7 +123,7 @@ public class LatencyDriver implements IDriver
 	 * Returns a list of all participating federates, sorted in a consistent manner across
 	 * all federates.
 	 */
-	private List<String> createPeerList()
+	private List<String> createParticipantList()
 	{
 		List<String> list = new ArrayList<String>();
 		list.add( configuration.getFederateName() );
@@ -153,49 +158,27 @@ public class LatencyDriver implements IDriver
 	 */
 	private void loop( int loopNumber ) throws RTIexception
 	{
-		if( loopNumber % ((int)configuration.getLoopCount()*0.1) == 0 )
-			logger.info( "Processing loop ["+loopNumber+"]" );
-
-		// cache a couple of things that we use multiple times
-		int peerCount = orderedPeers.size();
-
-		// if we do our test initially, then `currentTime % peerCount` will be 0.
-		// As we use the mod for an index into the ordered sender list, we need
-		// it to be this way, but it's also our sign that this loop is over. This
-		// is why we use a do..while() - by the time it gets to the test, time
-		// has moved forward one step, getting us past the problem
-		do
+		if( loopNumber % orderedParticipants.size() == myParticipantIndex )
 		{
-			// whose turn is it to send the ping?
-			int senderIndex = (int)fedamb.currentTime % peerCount;
-			String senderName = orderedPeers.get( senderIndex );
-
-			// do the sending (or listening)
-			if( configuration.getFederateName().equals(senderName) )
-			{
-				// Each interaction is sent with a serial to identify it - we calculate this
-				// so that it continually increases. 
-				int serial = (loopNumber-1) * peerCount + senderIndex + 1;
-
-				sendInteractionAndWait( serial );
-			}
-			else
-			{
-				respondToInteractions();
-			}
-			
-			// advance time once we're all done
-			long requestedTime = fedamb.currentTime+1;
-			rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
-			while( fedamb.currentTime < requestedTime )
-			{
-				if( configuration.isEvokedCallback() )
-					rtiamb.evokeCallback(looptime);
-				else
-					Utils.sleep( 5, 0 );
-			}
+			// Each interaction is sent with a serial to identify it - we calculate this
+			// so that it continually increases.
+			sendInteractionAndWait( loopNumber );
 		}
-		while( fedamb.currentTime % peerCount != 0 );
+		else
+		{
+			respondToInteractions( loopNumber );
+		}
+
+		// advance time once we're all done
+		long requestedTime = fedamb.currentTime+1;
+		rtiamb.timeAdvanceRequest( timeFactory.makeTime(requestedTime) );
+		while( fedamb.currentTime < requestedTime )
+		{
+			if( configuration.isEvokedCallback() )
+				rtiamb.evokeCallback(looptime);
+			else
+				Utils.sleep( 5, 0 );
+		}
 	}
 
 	/**
@@ -223,23 +206,55 @@ public class LatencyDriver implements IDriver
 		
 		// wait until we have all the responses before we request a time advance
 		while( event.hasReceivedAllResponses() == false )
-			rtiamb.evokeCallback( looptime );
+		{
+			if( configuration.isImmediateCallback() )
+				waitForPingAck();
+			else
+				rtiamb.evokeCallback( configuration.getLoopWait() );
+		}
 
 		// clear the current fedamb event so we're don't mistakenly thing we are still processing
 		fedamb.currentLatencyEvent = null;
 	}
 
+	private final void waitForPingAck()
+	{
+		synchronized( fedamb.pingack )
+		{
+			try
+			{
+				fedamb.pingack.wait( configuration.getLoopWait() ); 
+			}
+			catch( Exception e )
+			{
+				throw new RuntimeException(e);
+			}
+		}
+	}
+	
 	/**
 	 * It's someone elses turn to initiate the test. Monitor the fedamb for the incoming
 	 * request and respond as quickly as possible. Once we've responded, request a time
 	 * advance so that all our homies can sync up. We won't get the advance until the
 	 * requesting federate has all its responses, which should bring us all into step.
 	 */
-	private void respondToInteractions() throws RTIexception
+	private void respondToInteractions( int serial ) throws RTIexception
 	{
-		// tick until we've been pinged
-		while( fedamb.receivedPing == -1 )
-			rtiamb.evokeCallback( looptime );
+		// wait for someone to ping us
+		synchronized( fedamb.receivedPings )
+		{
+			while( fedamb.receivedPings.contains(serial) == false )
+			{
+    	        try
+    	        {
+    	        	fedamb.receivedPings.wait();
+    	        }
+    	        catch( Exception e )
+    	        {
+    	        	throw new RuntimeException( e );
+    	        }
+			}
+		}
 		
 		// we have been summoned - respond
 		ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create( 3 );

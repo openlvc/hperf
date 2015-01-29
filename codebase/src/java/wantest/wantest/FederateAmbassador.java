@@ -20,6 +20,8 @@
  */
 package wantest;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.apache.log4j.Logger;
 
 import static wantest.Handles.*;
@@ -65,7 +67,11 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public boolean timeRegulating;
 	public long currentTime;
 	public LatencyEvent currentLatencyEvent;
+	
+	public ConcurrentLinkedQueue<Integer> receivedPings;
 	public volatile int receivedPing; // serial of the request we just received
+	public Object ping;
+	public Object pingack;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -87,7 +93,10 @@ public class FederateAmbassador extends NullFederateAmbassador
 		this.timeRegulating = false;
 		this.currentTime = 0;
 		this.currentLatencyEvent = null;
+		this.receivedPings = new ConcurrentLinkedQueue<Integer>();
 		this.receivedPing = -1;
+		this.ping = new Object();
+		this.pingack = new Object();
 	}
 
 	//----------------------------------------------------------
@@ -246,7 +255,6 @@ public class FederateAmbassador extends NullFederateAmbassador
 	{
 		// get the serial out
 		int serial = Utils.bytesToInt( parameters.getValueReference(PC_PING_SERIAL).array() );
-		this.receivedPing = serial;
 
 		// validate the payload data if we've been asked to
 		if( configuration.getValidateData() )
@@ -255,6 +263,13 @@ public class FederateAmbassador extends NullFederateAmbassador
 			Utils.verifyPayload( parameters.getValueReference(PC_PING_PAYLOAD).array(),
 			                     configuration.getPacketSize(),
 			                     logger );
+		}
+
+		// let the people waiting on a ping know that it is here
+		synchronized( receivedPings )
+		{
+			this.receivedPings.add( serial );
+			this.receivedPings.notifyAll();
 		}
 	}
 
@@ -282,6 +297,11 @@ public class FederateAmbassador extends NullFederateAmbassador
 			Utils.verifyPayload( parameters.getValueReference(PC_PING_ACK_PAYLOAD).array(),
 			                     configuration.getPacketSize(),
 			                     logger );
+		}
+		
+		synchronized( pingack )
+		{
+			this.pingack.notifyAll();
 		}
 	}
 
