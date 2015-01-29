@@ -101,14 +101,22 @@ public class ThroughputReportGenerator
 			exportEventsToFile();
 
 	}
-	
+
+	/**
+	 * Given a `runtime` in millieseconds, return a string representing it. String is in the
+	 * format "1.23s (1234ms)" unless time is under 1s, in which case it is "999ms".
+	 */
 	private String getExecutionTime( long runtime )
 	{
 		long milliseconds = storage.getThroughputTestDuration();
 		if( milliseconds < 1000 )
+		{
 			return milliseconds+"ms";
+		}
 		else
-			return Math.ceil(milliseconds/1000)+"s";
+		{
+			return String.format( "%.2fs (%dms)", milliseconds/1000.0, milliseconds );
+		}
 	}
 	
 	/** Find the total number of events that we received */

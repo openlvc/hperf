@@ -432,7 +432,7 @@ public class ThroughputDriver implements IDriver
 					notfinished.remove( federate );
 				}
 			}
-
+			
 			//////////////////////////////////////////////////////
 			// check to make sure we are still receiving events //
 			//////////////////////////////////////////////////////
@@ -469,11 +469,11 @@ public class ThroughputDriver implements IDriver
 			}
 			
 			// process a bit
-			tickOrSleep( 100 );
+			tickOrSleep( 10 );
 		}
 		
-		logger.info( "All finished - synchronizing" );
 		storage.stopThroughputTestTimer();
+		logger.info( "All finished - synchronizing" );
 		rtiamb.synchronizationPointAchieved( "FINISH_THROUGHPUT_TEST" );
 		while( fedamb.finishedThroughputTest == false )
 			tickOrSleep( 500 );
