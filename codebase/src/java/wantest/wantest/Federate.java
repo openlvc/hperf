@@ -313,16 +313,22 @@ public class Federate
 	 */
 	private void announceSyncPoints()
 	{
-		try
+		String[] points = new String[] { "START_THROUGHPUT_TEST",
+		                                 "FINISH_THROUGHPUT_TEST",
+		                                 "START_LATENCY_TEST",
+		                                 "FINISH_LATENCY_TEST" };
+
+		for( String point : points )
 		{
-			rtiamb.registerFederationSynchronizationPoint( "START_THROUGHPUT_TEST", new byte[]{} );
-			rtiamb.registerFederationSynchronizationPoint( "FINISH_THROUGHPUT_TEST", new byte[]{} );
-			rtiamb.registerFederationSynchronizationPoint( "START_LATENCY_TEST", new byte[]{} );
-			rtiamb.registerFederationSynchronizationPoint( "FINISH_LATENCY_TEST", new byte[]{} );
-		}
-		catch( Exception e )
-		{
-			logger.warn( "Exception while registering exit sync point: "+e.getMessage() );
+			try
+			{
+				rtiamb.registerFederationSynchronizationPoint( point, new byte[]{} );
+				rtiamb.evokeMultipleCallbacks(0.1,0.1); // let the success/fail callback come in
+			}
+			catch( Exception e )
+			{
+				logger.warn( "Exception registering sync point ["+point+"]: "+e.getMessage() );
+			}			
 		}
 	}
 	

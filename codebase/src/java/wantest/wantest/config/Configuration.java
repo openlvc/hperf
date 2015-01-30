@@ -52,6 +52,7 @@ public class Configuration
 	private int packetSize;  // the minimum size of each update in kb
 	private boolean validateData;
 	private List<String> peers;
+	private boolean latencySender;  // is this the sender for the latency federate?
 
 	private boolean runThroughputTest;
 	private boolean runLatencyTest;
@@ -80,6 +81,7 @@ public class Configuration
 		this.packetSize = 1000;
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
+		this.latencySender = false;
 
 		// default to run neither test unless instructed
 		this.runThroughputTest = false;
@@ -183,6 +185,12 @@ public class Configuration
 	}
 
 	// Execution and Misc Options
+	/** Is this federate the one that sends the ping requests for the latency test? */
+	public boolean isLatencySender()
+	{
+		return this.latencySender;
+	}
+	
 	/** Should the throughput test be run? */
 	public boolean isThroughputTestEnabled()
 	{
@@ -338,6 +346,13 @@ public class Configuration
 					peers.add( tokenizer.nextToken() );
 				
 				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--sender") )
+			{
+				this.latencySender = true;
+				count++;
 				continue;
 			}
 			

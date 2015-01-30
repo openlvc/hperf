@@ -166,6 +166,27 @@ public class Utils
 			throw new RuntimeException( ie );
 		}
 	}
+
+	/**
+	 * Convenience method that will call `.wait()` on the given object and swallow the
+	 * interrupted exception, returning immediately if it is generated. Condenses the
+	 * code a little bit, making things a bit simpler and easier to read without the big
+	 * try/catch guff.
+	 */
+	public static final void wait( Object waitObject )
+	{
+		synchronized( waitObject )
+		{
+			try
+			{
+				waitObject.wait();
+			}
+			catch( Exception e )
+			{
+				return;
+			}
+		}
+	}
 	
 	///////////////////////////////////////////////////////////////
 	// Int Conversion Methods                                    //

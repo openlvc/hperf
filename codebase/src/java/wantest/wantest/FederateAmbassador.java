@@ -20,6 +20,8 @@
  */
 package wantest;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
@@ -59,8 +61,8 @@ public class FederateAmbassador extends NullFederateAmbassador
 	// sync point information
 	public boolean startThroughputTest;
 	public boolean finishedThroughputTest;
-	public boolean startLatencyTest;
-	public boolean finishedLatencyTest;
+	public Set<String> announcedSyncPoints;
+	public Set<String> achievedSyncPoints;
 	
 	// latency test specific values
 	public boolean timeConstrained;
@@ -68,10 +70,8 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public long currentTime;
 	public LatencyEvent currentLatencyEvent;
 	
-	public ConcurrentLinkedQueue<Integer> receivedPings;
-	public volatile int receivedPing; // serial of the request we just received
-	public Object ping;
-	public Object pingack;
+	public ConcurrentLinkedQueue<Integer> pingReceived;
+	public Object pingSignal; // object we use to signal to other thread that ping has been received 
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -85,18 +85,16 @@ public class FederateAmbassador extends NullFederateAmbassador
 		// sync points
 		this.startThroughputTest = false;
 		this.finishedThroughputTest = false;
-		this.startLatencyTest = false;
-		this.finishedLatencyTest = false;
+		this.announcedSyncPoints = new HashSet<String>();
+		this.achievedSyncPoints = new HashSet<String>();
 		
 		// latency test specific values
 		this.timeConstrained = false;
 		this.timeRegulating = false;
 		this.currentTime = 0;
 		this.currentLatencyEvent = null;
-		this.receivedPings = new ConcurrentLinkedQueue<Integer>();
-		this.receivedPing = -1;
-		this.ping = new Object();
-		this.pingack = new Object();
+		this.pingReceived = new ConcurrentLinkedQueue<Integer>();
+		this.pingSignal = new Object();
 	}
 
 	//----------------------------------------------------------
@@ -266,10 +264,10 @@ public class FederateAmbassador extends NullFederateAmbassador
 		}
 
 		// let the people waiting on a ping know that it is here
-		synchronized( receivedPings )
+		synchronized( pingSignal )
 		{
-			this.receivedPings.add( serial );
-			this.receivedPings.notifyAll();
+			this.pingReceived.add( serial );
+			this.pingSignal.notifyAll();
 		}
 	}
 
@@ -299,9 +297,9 @@ public class FederateAmbassador extends NullFederateAmbassador
 			                     logger );
 		}
 		
-		synchronized( pingack )
+		synchronized( pingSignal )
 		{
-			this.pingack.notifyAll();
+			this.pingSignal.notifyAll();
 		}
 	}
 
@@ -336,20 +334,18 @@ public class FederateAmbassador extends NullFederateAmbassador
 	public void announceSynchronizationPoint( String label, byte[] tag )
 		throws FederateInternalError
 	{
-		// no-op
+		this.announcedSyncPoints.add( label );
 	}
 
 	public void federationSynchronized( String label, FederateHandleSet failedSet )
 		throws FederateInternalError
 	{
+		this.achievedSyncPoints.add( label );
+		
 		if( label.equals("START_THROUGHPUT_TEST") )
 			this.startThroughputTest = true;
 		else if( label.equals("FINISH_THROUGHPUT_TEST") )
 			this.finishedThroughputTest = true;
-		else if( label.equals("START_LATENCY_TEST") )
-			this.startLatencyTest = true;
-		else if( label.equals("FINISH_LATENCY_TEST") )
-			this.finishedLatencyTest = true;
 	}
 
 	//----------------------------------------------------------

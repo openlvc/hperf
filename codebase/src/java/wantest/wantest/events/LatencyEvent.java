@@ -20,8 +20,8 @@
  */
 package wantest.events;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import wantest.TestFederate;
 
@@ -49,7 +49,7 @@ public class LatencyEvent
 		this.sentTimestamp = 0;
 		this.responseCount = responseCount;
 		this.payloadSize = payloadSize;
-		this.responses = new HashMap<TestFederate,Long>();
+		this.responses = new ConcurrentHashMap<TestFederate,Long>();
 	}
 
 	//----------------------------------------------------------
