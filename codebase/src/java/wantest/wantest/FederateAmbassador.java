@@ -59,8 +59,6 @@ public class FederateAmbassador extends NullFederateAmbassador
 	private Storage storage;
 	
 	// sync point information
-	public boolean startThroughputTest;
-	public boolean finishedThroughputTest;
 	public Set<String> announcedSyncPoints;
 	public Set<String> achievedSyncPoints;
 	
@@ -83,8 +81,6 @@ public class FederateAmbassador extends NullFederateAmbassador
 		this.storage = storage;
 		
 		// sync points
-		this.startThroughputTest = false;
-		this.finishedThroughputTest = false;
 		this.announcedSyncPoints = new HashSet<String>();
 		this.achievedSyncPoints = new HashSet<String>();
 		
@@ -341,11 +337,6 @@ public class FederateAmbassador extends NullFederateAmbassador
 		throws FederateInternalError
 	{
 		this.achievedSyncPoints.add( label );
-		
-		if( label.equals("START_THROUGHPUT_TEST") )
-			this.startThroughputTest = true;
-		else if( label.equals("FINISH_THROUGHPUT_TEST") )
-			this.finishedThroughputTest = true;
 	}
 
 	//----------------------------------------------------------

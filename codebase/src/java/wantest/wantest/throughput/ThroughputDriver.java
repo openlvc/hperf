@@ -289,7 +289,7 @@ public class ThroughputDriver implements IDriver
 		rtiamb.synchronizationPointAchieved( "START_THROUGHPUT_TEST" );
 		
 		// wait for everyone to do the same
-		while( fedamb.startThroughputTest == false )
+		while( fedamb.achievedSyncPoints.contains("START_THROUGHPUT_TEST") == false )
 			tickOrSleep( 500 );
 	}
 
@@ -475,7 +475,7 @@ public class ThroughputDriver implements IDriver
 		storage.stopThroughputTestTimer();
 		logger.info( "All finished - synchronizing" );
 		rtiamb.synchronizationPointAchieved( "FINISH_THROUGHPUT_TEST" );
-		while( fedamb.finishedThroughputTest == false )
+		while( fedamb.achievedSyncPoints.contains("FINISH_THROUGHPUT_TEST") == false )
 			tickOrSleep( 500 );
 	}
 
@@ -491,7 +491,7 @@ public class ThroughputDriver implements IDriver
 		if( configuration.isImmediateCallback() )
 			Utils.sleep( millis );
 		else
-			rtiamb.evokeMultipleCallbacks( (millis*1000), (millis*1000) );
+			rtiamb.evokeMultipleCallbacks( (millis/1000.0), (millis/1000.0) );
 	}
 
 	public String getName()
