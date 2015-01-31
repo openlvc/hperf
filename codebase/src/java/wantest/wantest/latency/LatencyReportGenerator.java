@@ -56,7 +56,7 @@ public class LatencyReportGenerator
 	//----------------------------------------------------------
 	public LatencyReportGenerator( Storage storage )
 	{
-		this.logger = Logger.getLogger( "wantest" );
+		this.logger = Logger.getLogger( "wantest" ); // TODO Fix me for JVM federations
 		this.storage = storage;
 	}
 
