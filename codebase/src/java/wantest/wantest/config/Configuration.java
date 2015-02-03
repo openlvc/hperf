@@ -247,7 +247,14 @@ public class Configuration
 	{
 		return this.latencySender;
 	}
-	
+
+	/** Set whether or not this federate is a latency sender. Only done to support
+	    federates running using the JVM binding */
+	public void setLatencySender( boolean sender )
+	{
+		this.latencySender = sender;
+	}
+
 	/** Should the throughput test be run? */
 	public boolean isThroughputTestEnabled()
 	{

@@ -62,7 +62,12 @@ public class Main
 			
 			// set us up as the master if that is the case
 			if( masterFederate.equals(name) )
+			{
 				local.setJvmMaster( true );
+				
+				// if we're running the latency test, flag the master as a sender
+				local.setLatencySender( true );
+			}
 			
 			// run the thing
 			Runnable runner = new Runnable()
