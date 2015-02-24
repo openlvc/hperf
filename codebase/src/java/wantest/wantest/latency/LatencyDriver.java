@@ -140,7 +140,7 @@ public class LatencyDriver implements IDriver
 		// wait until we have all the responses before we request a time advance
 		do
 		{
-			rtiamb.evokeCallback( configuration.getLoopWait() );
+			rtiamb.evokeCallback( configuration.getLoopWait() / 1000.0f );
 		}
 		while( event.hasReceivedAllResponses() == false );
 
