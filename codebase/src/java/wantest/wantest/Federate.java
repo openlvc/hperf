@@ -87,6 +87,7 @@ public class Federate
 		logger.info( "" );
 		logger.info( "    Test Driver: "+driver.getName() );
 		logger.info( "  Callback Mode: "+(configuration.isImmediateCallback() ? "IMMEDIATE":"EVOKED") );
+		logger.info( "   Time Stepped: "+(configuration.isTimestepped() ? "YES":"NO") );
 		logger.info( "" );
 		
 		// Create and Join the federation
