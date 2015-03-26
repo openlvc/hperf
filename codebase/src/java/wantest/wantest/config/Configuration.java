@@ -55,6 +55,7 @@ public class Configuration
 	private boolean validateData;
 	private List<String> peers;
 	private boolean latencySender;  // is this the sender for the latency federate?
+	private int printInterval;  // number of loops at which to print throughput federate status
 
 	private boolean runThroughputTest;
 	private boolean runLatencyTest;
@@ -86,6 +87,7 @@ public class Configuration
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
 		this.latencySender = false;
+		this.printInterval = -1;
 
 		// default to run neither test unless instructed
 		this.runThroughputTest = false;
@@ -255,6 +257,13 @@ public class Configuration
 		this.latencySender = sender;
 	}
 
+	/** Number of iterations that should happen before we print a status update for the
+	    throughput test. Defaults to -1, which is "auto" based on number of iterations. */
+	public int getPrintInterval()
+	{
+		return this.printInterval;
+	}
+	
 	/** Should the throughput test be run? */
 	public boolean isThroughputTestEnabled()
 	{
@@ -475,6 +484,14 @@ public class Configuration
 			{
 				this.printEventLog = true;
 				count++;
+				continue;
+			}
+			
+			if( argument.startsWith("--print-interval") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.printInterval = Integer.parseInt( args[count+1] );
+				count += 2;
 				continue;
 			}
 			

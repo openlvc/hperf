@@ -15,6 +15,7 @@ function printUsage()
 	echo "    --loop-wait          [number]    (optional) How long to tick (ms) each loop (if in 'evoked' mode), default 10"
 	echo "                                                This argument has no effect in immediate callback mode"
 	echo "    --log-level          [string]    (optional) TRACE | DEBUG | INFO | WARN | FATAL | OFF, default INFO"
+	echo "    --print-interval     [number]    (optional) Print status update every X iterations, default 10% of loops"
 	echo "    --print-event-log                (optional) If specified, prints a list of vital stats on all events"
 	echo "    --export-cvs         [string]    (optional) File to dump event list to. No export if not provided"
 	echo ""

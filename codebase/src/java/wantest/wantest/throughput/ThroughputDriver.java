@@ -192,13 +192,24 @@ public class ThroughputDriver implements IDriver
 	}
 
 	/** We print out stats every so often during a run. This method determines how often.
-	    For small sizes, this is every 10% of the total loop count. For larger, it's more often */
+	    For small sizes, this is every 10% of the total loop count. For larger, it's more often.
+	    Users can manually specify a value from the command line if they want, in which case we
+	    just return that. */
 	private int getBatchSize()
 	{
-		if( configuration.getLoopCount() > 100000 )
-			return 10000;
+		if( configuration.getPrintInterval() == -1 )
+		{
+			// auto configure based on the loop count
+    		if( configuration.getLoopCount() > 100000 )
+    			return 10000;
+    		else
+    			return (int)Math.ceil( configuration.getLoopCount() * 0.1 );
+		}
 		else
-			return (int)Math.ceil( configuration.getLoopCount() * 0.1 );
+		{
+			// value has been specified - just use it
+			return configuration.getPrintInterval();
+		}
 	}
 
 	private void printHeader()
