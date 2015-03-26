@@ -425,7 +425,9 @@ public class ThroughputDriver implements IDriver
 		
 		// get a list of all peers - integer is how many messages we've received
 		Collection<TestFederate> notfinished = new ConcurrentLinkedQueue<TestFederate>( storage.getPeers() );
-		
+
+		int lastCount = 0;             // total event count last loop
+		int stagnentPeriods = 0;       // number of loops lastCount hasn't moved
 		long nextScheduledReport = 0;  // earliest time we should print waiting summary
 		while( notfinished.isEmpty() == false )
 		{
@@ -442,7 +444,34 @@ public class ThroughputDriver implements IDriver
 					notfinished.remove( federate );
 				}
 			}
-			
+
+			//////////////////////////////////////////////////////
+			// check to make sure we are still receiving events //
+			//////////////////////////////////////////////////////
+			// we wait 10 reporting periods (summary stuff in the next block)
+			// and if we haven't received *any* events in that time, we give up
+			// Previously we just waited 10 of these loops - but that was too fast.
+			int thisCount = storage.getThroughputEvents().size();
+			if( System.currentTimeMillis() > nextScheduledReport )
+			{
+    			if( thisCount == lastCount )
+    			{
+    				stagnentPeriods++;
+    				if( stagnentPeriods > 10 )
+    				{
+    					// give up
+    					logger.info( "Waited too long for federates "+notfinished+
+    					             " - these events clearly aren't coming, dropped packets" );
+    					break;
+    				}
+    			}
+    			else
+    			{
+    				lastCount = thisCount;
+    				stagnentPeriods = 0;
+    			}
+			}
+
 			////////////////////////////////////////////////////////////////
 			// print a summary of who we're waiting for every two seconds //
 			////////////////////////////////////////////////////////////////
