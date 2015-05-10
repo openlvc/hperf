@@ -350,7 +350,7 @@ public class Federate
 		//       remain. in that case we'll leave it for them to clean up
 		try
 		{
-			rtiamb.destroyFederationExecution( "ExampleFederation" );
+			rtiamb.destroyFederationExecution( configuration.getFederationName() );
 			logger.info( "Destroyed Federation" );
 		}
 		catch( FederationExecutionDoesNotExist dne )
