@@ -115,6 +115,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 			// Class: HLAobjectRoot.TestFederate
 			//
 			storage.addPeer( new TestFederate(objectName) );
+			logger.info( "Discovered federate "+objectName );
 		}
 		else if( theObjectClass.equals(Handles.OC_TEST_OBJECT) )
 		{
