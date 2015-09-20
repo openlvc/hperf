@@ -160,7 +160,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 			String senderName = new String( theAttributes.getValueReference(AC_CREATOR).array() );
 			TestFederate sender = storage.getPeer( senderName );
 			if( sender == null )
-				logger.error( "Received initial update from an undiscovered federate" );
+				logger.error( "Received initial update from an undiscovered federate: "+senderName );
 			else
 				testObject.setCreator( sender );
 		}
