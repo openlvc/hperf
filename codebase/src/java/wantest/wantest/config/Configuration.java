@@ -51,6 +51,7 @@ public class Configuration
 	private int loopCount;
 	private int loopWait;
 	private int objectCount; // number of objects we'll create
+	private int interactionCount; // number of interactions to send each iteration
 	private int packetSize;  // the minimum size of each update in kb
 	private boolean validateData;
 	private List<String> peers;
@@ -83,6 +84,7 @@ public class Configuration
 		this.loopCount = 20;
 		this.loopWait = 10;
 		this.objectCount = 20;
+		this.interactionCount = -1; // if -1, will default to same as objectCount
 		this.packetSize = 1000;
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
@@ -212,6 +214,18 @@ public class Configuration
 	public int getObjectCount()
 	{
 		return this.objectCount;
+	}
+
+	/**
+	 * The number of interactions that this federate should sent each iteraction.
+	 * This should be the same across all federates in a test run, as other federates
+	 * will base their expectations on this. Defaults to the same value as returned
+	 * by {@link #getObjectCount()} unless specifically specified on the commadn line.
+	 * @return
+	 */
+	public int getInteractionCount()
+	{
+		return this.interactionCount == -1 ? this.objectCount : this.interactionCount;
 	}
 
 	/**
@@ -430,6 +444,22 @@ public class Configuration
 				continue;
 			}
 			
+			if( argument.startsWith("--objects") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.objectCount = Integer.parseInt( args[count+1] );
+				count += 2;
+				continue;
+			}
+			
+			if( argument.startsWith("--interactions") )
+			{
+				validateArgIsValue( argument, args[count+1] );
+				this.interactionCount = Integer.parseInt( args[count+1] );
+				count += 2;
+				continue;
+			}
+
 			if( argument.startsWith("--sender") )
 			{
 				this.latencySender = true;

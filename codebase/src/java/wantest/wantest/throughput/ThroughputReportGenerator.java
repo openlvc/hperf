@@ -148,11 +148,12 @@ public class ThroughputReportGenerator
 		// build up the report string
 		int peerCount = configuration.getPeers().size();
 		int objectCount = configuration.getObjectCount();
+		int interactionCount = configuration.getInteractionCount();
 		int loopCount = configuration.getLoopCount();
 
 		int expectedDiscovers = objectCount * peerCount;
 		int expectedReflects = objectCount * peerCount * loopCount;
-		int expectedInteractions = expectedReflects; // we send with each obj update
+		int expectedInteractions = interactionCount * peerCount * loopCount;
 		String discoverProblem = (actualDiscovers != expectedDiscovers) ? "(!!)" : "";
 		String reflectProblem = (actualReflects != expectedReflects) ? "(!!)" : "";
 		String interactionProblem = (actualInteractions != expectedInteractions) ? "(!!)" : "";

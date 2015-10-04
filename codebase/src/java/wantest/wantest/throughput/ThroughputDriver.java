@@ -171,9 +171,9 @@ public class ThroughputDriver implements IDriver
 				String sentmbps     = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
 
 				// log it all for the people
-				String msg = "Finished loop %-7d -- %5dms, %6d received (%5d/s), %10s -- %6d sent (%5d/s), %10s";
-				logger.info( String.format(msg, i, duration, receivedCount, receivedPerSecond,
-				                           receivedmbps, sentCount, sentPerSecond, sentmbps) );
+				String msg = "[%-6d] -- %5dms, send %10s (%5d/s) -- recv %10s (%5d/s)";
+				logger.info( String.format(msg,i,duration,sentmbps,sentPerSecond,
+				                           receivedmbps,receivedPerSecond) );
 				
 				// reset the batch variables so we can compare next time
 				lastTimestamp = now;
@@ -216,15 +216,18 @@ public class ThroughputDriver implements IDriver
 	{
 		int loops = configuration.getLoopCount();
 		int objects = configuration.getObjectCount();
+		int interactions = configuration.getInteractionCount();
+		int messages = objects+interactions;
 		int packetSize = configuration.getPacketSize();
-		long sendSize = (long)objects * (long)2 * (long)loops * (long)packetSize;
+		long sendSize = (objects * loops * packetSize) + (interactions * loops * packetSize);
 		long revcSize = sendSize * configuration.getPeers().size();
 		logger.info( "" );
 		logger.info( "  Min Messsage Size = "+Utils.getSizeString(packetSize) );
 		logger.info( "         Loop Count = "+configuration.getLoopCount() );
 		logger.info( "       Object Count = "+configuration.getObjectCount() );
-		logger.info( "  Messages Per Loop = "+objects*2+" ("+objects+" updates, "+objects+" interactions)" );
-		logger.info( "     Total Messages = "+objects*2 * loops );
+		logger.info( "  Interaction Count = "+configuration.getInteractionCount() );
+		logger.info( "  Messages Per Loop = "+messages+" ("+objects+" updates, "+interactions+" interactions)" );
+		logger.info( "     Total Messages = "+messages * loops );
 		logger.info( "              Peers = "+configuration.getPeers().size() );
 		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,1) );
 		logger.info( "    Total Revc Size = "+Utils.getSizeString(revcSize,1) );
@@ -363,13 +366,19 @@ public class ThroughputDriver implements IDriver
 			attributes.put( AC_LAST_UPDATED, Utils.longToBytes(System.currentTimeMillis()) );
 			attributes.put( AC_PAYLOAD, payload );
 			rtiamb.updateAttributeValues( testObject.getHandle(), attributes, null );
-			logger.debug( "  (update) Sent update for object "+testObject.getName() );
-			
+			if( logger.isDebugEnabled() )
+				logger.debug( "  (update) Sent update for object "+testObject.getName() );
+		}
+
+		final int interactionCount = configuration.getInteractionCount();
+		for( int i = 0; i < interactionCount; i++ )
+		{
 			parameters.clear();
 			parameters.put( PC_THROUGHPUT_SENDER, senderNameBytes );
 			parameters.put( PC_THROUGHPUT_PAYLOAD, payload );
 			rtiamb.sendInteraction( IC_THROUGHPUT, parameters, null );
-			logger.debug( "  (interaction) Sent interaction" );
+			if( logger.isDebugEnabled() )
+				logger.debug( "  (interaction) Sent interaction ["+i+"/"+interactionCount+"]" );			
 		}
 
 
@@ -419,9 +428,10 @@ public class ThroughputDriver implements IDriver
 		logger.info( "Finished sending messages, waiting for everyone else" );
 
 		// number of events expected per federate
-		int expectedPerFederate = configuration.getObjectCount() +   /* discover events */
-		                         (configuration.getObjectCount() *   /* reflects + interactions */
-		                          configuration.getLoopCount() * 2);
+		int loopCount = configuration.getLoopCount();
+		int expectedPerFederate = configuration.getObjectCount() +                  /* discovers */
+                                 (configuration.getObjectCount() * loopCount) +     /* reflects */
+                                 (configuration.getInteractionCount() * loopCount); /* interactions */
 		
 		// get a list of all peers - integer is how many messages we've received
 		Collection<TestFederate> notfinished = new ConcurrentLinkedQueue<TestFederate>( storage.getPeers() );
