@@ -76,7 +76,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 	//----------------------------------------------------------
 	public FederateAmbassador( Configuration configuration, Storage storage )
 	{
-		this.logger = Logger.getLogger( "wantest" );
+		this.logger = Logger.getLogger( "wt" );
 		this.configuration = configuration;
 		this.storage = storage;
 		

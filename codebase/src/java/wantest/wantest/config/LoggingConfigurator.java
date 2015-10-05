@@ -54,7 +54,7 @@ public class LoggingConfigurator
 			return;
 
 		// create the appender
-		PatternLayout layout = new PatternLayout( "%-5p [%t] %c: %x%m%n" );
+		PatternLayout layout = new PatternLayout( "%-5p [%c]: %x%m%n" );
 		ConsoleAppender appender = new ConsoleAppender( layout, ConsoleAppender.SYSTEM_OUT );
 		appender.setThreshold( Level.TRACE ); // output restricted at logger level, not appender
 		
