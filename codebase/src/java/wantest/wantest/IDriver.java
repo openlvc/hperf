@@ -33,9 +33,10 @@ public interface IDriver
 {
 	public String getName();
 	
-	public void execute( Configuration configuration,
-	                     RTIambassador rtiamb,
-	                     FederateAmbassador fedamb,
-	                     Storage storage )
+	public void configure( Configuration configuration );
+	
+	public void printWelcomeMessage();
+
+	public void execute( RTIambassador rtiamb, FederateAmbassador fedamb, Storage storage )
 		throws RTIexception;
 }

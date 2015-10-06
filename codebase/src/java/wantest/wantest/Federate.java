@@ -82,7 +82,7 @@ public class Federate
 	public void execute() throws Exception
 	{
 		// load the appropriate driver
-		this.driver = loadDriver();
+		this.driver = loadDriver( configuration );
 		
 		logger.info( "" );
 		logger.info( "    Test Driver: "+driver.getName() );
@@ -98,6 +98,9 @@ public class Federate
 		
 		// Register object representing federate
 		this.registerFederateObject();
+		
+		// Print out some test information and wait for our peers to turn up
+		driver.printWelcomeMessage();
 
 		// Wait until everyone else turns up
 		this.waitForPeers();
@@ -108,7 +111,7 @@ public class Federate
 		/////////////////////////
 		// Main test execution //
 		/////////////////////////
-		this.driver.execute( configuration, rtiamb, fedamb, storage );
+		this.driver.execute( rtiamb, fedamb, storage );
 
 		// Get out of here
 		this.resignAndDestroy();
@@ -128,14 +131,20 @@ public class Federate
 			this.logger.setLevel( Level.OFF );
 	}
 
-	private IDriver loadDriver() throws Exception
+	private IDriver loadDriver( Configuration configuration ) throws Exception
 	{
+		IDriver driver = null;
+		
 		if( configuration.isThroughputTestEnabled() )
-			return new ThroughputDriver();
+			driver = new ThroughputDriver();
 		else if( configuration.isLatencyTestEnabled() )
-			return new LatencyDriver();
+			driver = new LatencyDriver();
 		else
 			throw new Exception( "You must specify at least --throughput-test or --latency-test" );
+		
+		// configure the driver
+		driver.configure( configuration );
+		return driver;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////

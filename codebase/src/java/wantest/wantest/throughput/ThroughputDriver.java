@@ -77,6 +77,12 @@ public class ThroughputDriver implements IDriver
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+	public void configure( Configuration configuration )
+	{
+		this.configuration = configuration;
+		this.logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
+	}
+
 	/**
 	 * Perform the core execution for the Throughput Test. This method will:
 	 * 
@@ -89,30 +95,14 @@ public class ThroughputDriver implements IDriver
 	 *    - Wait for everyone to synchronize on the finishing sync point
 	 * 
 	 * Once complete, all results will be stored in the provided {@link Storage} object.
-	 * 
-	 * @param configuration
-	 * @param rtiamb
-	 * @param fedamb
-	 * @param storage
-	 * @throws RTIexception
 	 */
-	public void execute( Configuration configuration,
-	                     RTIambassador rtiamb,
-	                     FederateAmbassador fedamb,
-	                     Storage storage )
+	public void execute( RTIambassador rtiamb, FederateAmbassador fedamb, Storage storage )
 		throws RTIexception
 	{
-		logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
-		this.configuration = configuration;
 		this.rtiamb = rtiamb;
 		this.fedamb = fedamb;
 		this.storage = storage;
 		this.payload = Utils.generatePayload( configuration.getPacketSize() );
-		
-		logger.info( " ===================================" );
-		logger.info( " =     Running Throughput Test     =" );
-		logger.info( " ===================================" );
-		printHeader();
 
 		// Enable time policy if we use it
 		if( configuration.isTimestepped() )
@@ -212,15 +202,20 @@ public class ThroughputDriver implements IDriver
 		}
 	}
 
-	private void printHeader()
+	public void printWelcomeMessage()
 	{
 		int loops = configuration.getLoopCount();
 		int objects = configuration.getObjectCount();
 		int interactions = configuration.getInteractionCount();
 		int messages = objects+interactions;
 		int packetSize = configuration.getPacketSize();
-		long sendSize = (objects * loops * packetSize) + (interactions * loops * packetSize);
-		long revcSize = sendSize * configuration.getPeers().size();
+		long sendSize = (long)objects * (long)loops * (long)packetSize +
+		                (long)interactions * (long)loops * (long)packetSize;
+		long recvSize = sendSize * (long)configuration.getPeers().size();
+
+		logger.info( " ===================================" );
+		logger.info( " =     Running Throughput Test     =" );
+		logger.info( " ===================================" );
 		logger.info( "" );
 		logger.info( "  Min Messsage Size = "+Utils.getSizeString(packetSize) );
 		logger.info( "         Loop Count = "+configuration.getLoopCount() );
@@ -229,8 +224,8 @@ public class ThroughputDriver implements IDriver
 		logger.info( "  Messages Per Loop = "+messages+" ("+objects+" updates, "+interactions+" interactions)" );
 		logger.info( "     Total Messages = "+messages * loops );
 		logger.info( "              Peers = "+configuration.getPeers().size() );
-		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,1) );
-		logger.info( "    Total Revc Size = "+Utils.getSizeString(revcSize,1) );
+		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,2).trim() );
+		logger.info( "    Total Revc Size = "+Utils.getSizeString(recvSize,2).trim() );
 		logger.info( "" );
 	}
 
