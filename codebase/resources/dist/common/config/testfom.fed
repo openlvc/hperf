@@ -16,7 +16,6 @@
         (attribute federateName reliable timestamp)
       )
       (class TestObject
-        (attribute lastUpdated  reliable timestamp)
         (attribute creator      reliable timestamp)
         (attribute payload      reliable timestamp) ;; we use this to get variable send sizes
       )
