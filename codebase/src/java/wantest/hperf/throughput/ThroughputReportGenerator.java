@@ -167,14 +167,14 @@ public class ThroughputReportGenerator
 		//logger.info( "  per | 12345s | 1000000000 | 1234.5MB |  123.4MB/s |  100000/s |" );
 		//logger.info( "      -----------------------------------------------------------" );
 
-		logger.info( "         |----------------------------------------------------------|" );
-		logger.info( "         |        ---- Totals ----         |    -- Throughput --    |" );
-		logger.info( "         | Window  |  Messages  |   Data   |   Data/s   |   Msg/s   |" );
-		logger.info( "         |---------|------------|----------|------------|-----------|" );
+		logger.info( "         |------------------------------------------------------------|" );
+		logger.info( "         |        ---- Totals ----         |     -- Throughput --     |" );
+		logger.info( "         | Window  |  Messages  |   Data   |    Data/s    |   Msg/s   |" );
+		logger.info( "         |---------|------------|----------|--------------|-----------|" );
 
 		// display stats for the local federate
 		logThroughputTableEntry( storage.getLocalFederate() );
-		logger.info( "         |----------------------------------------------------------|" );
+		logger.info( "         |------------------------------------------------------------|" );
 		
 		// display stats for each of the peers
 		for( TestFederate federate : storage.getPeers() )
@@ -184,7 +184,7 @@ public class ThroughputReportGenerator
 				logThroughputTableEntry( federate );
 		}
 
-		logger.info( "         |----------------------------------------------------------|" );
+		logger.info( "         |------------------------------------------------------------|" );
 		
 		// log the overall totals
 		long reflectEvents = storage.getReflectEventCount();
@@ -197,16 +197,20 @@ public class ThroughputReportGenerator
 		long eventCount = reflectEvents + interactionEvents; // no discover -- outside recv window
 		double dataPerSecond = (totalBytes/(double)receiveWindow) * 1000.0; // revc window in ms
 		double msgsPerSecond = (eventCount/(double)receiveWindow) * 1000.0;
-		
-		String line = String.format( "%8s | %7s | %10s | %8s | %10s | %7d/s |",
+
+		String throughput = Utils.getMegabytesPerSec( dataPerSecond, 1 );
+		if( configuration.isPrintMegabits() )
+			throughput = Utils.getMegabitsPerSec( dataPerSecond * 8.0 );
+
+		String line = String.format( "%8s | %7s | %10s | %8s | %12s | %7d/s |",
 		                             "All",
 		                             getTimeString(receiveWindow),
 		                             eventCount,
 		                             Utils.getSizeString( reflectBytes+interactionBytes, 1 ),
-		                             Utils.getSizeStringPerSec( dataPerSecond, 1 ),
+		                             throughput,
 		                             (int)msgsPerSecond );
 		logger.info( line );
-		logger.info( "         |----------------------------------------------------------|" );
+		logger.info( "         |------------------------------------------------------------|" );
 		logger.info( "" );
 		
 	}
@@ -225,12 +229,16 @@ public class ThroughputReportGenerator
 		double dataPerSecond = (totalBytes/(double)receiveWindow) * 1000.0; // revc window in ms
 		double msgsPerSecond = (eventCount/(double)receiveWindow) * 1000.0;
 		
-		String line = String.format( "%8s | %7s | %10s | %8s | %10s | %7d/s |",
+		String throughput = Utils.getMegabytesPerSec( dataPerSecond, 1 );
+		if( configuration.isPrintMegabits() )
+			throughput = Utils.getMegabitsPerSec( dataPerSecond * 8.0 );
+		
+		String line = String.format( "%8s | %7s | %10s | %8s | %12s | %7d/s |",
 		                             federateName,
 		                             getTimeString(receiveWindow),
 		                             eventCount,
 		                             Utils.getSizeString( reflectBytes+interactionBytes, 1 ),
-		                             Utils.getSizeStringPerSec( dataPerSecond, 1 ),
+		                             throughput,
 		                             (int)msgsPerSecond );
 		logger.info( line );
 	}

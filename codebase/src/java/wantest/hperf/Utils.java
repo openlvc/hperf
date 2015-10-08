@@ -126,7 +126,7 @@ public class Utils
 			return bytes+"b";
 	}
 
-	public static String getSizeStringPerSec( double bytes, int decimalPlaces )
+	public static String getMegabytesPerSec( double bytes, int decimalPlaces )
 	{
 		// let's see how much we have so we can figure out the right qualifier
 		double totalkb = bytes / 1000;
@@ -138,6 +138,23 @@ public class Utils
 			return String.format( "%5."+decimalPlaces+"fMB/s", totalmb );
 		else
 			return String.format( "%5."+decimalPlaces+"fKB/s", totalkb );
+	}
+
+	public static String getMegabitsPerSec( double bits )
+	{
+		// let's see how much we have so we can figure out the right qualifier
+		double totalkb = bits / 1000;
+		double totalmb = totalkb / 1000;
+		double totalgb = totalmb / 1000;
+		
+		if( totalgb > 1 )
+			return String.format( "%4.2f Gbits/s", totalgb );     /** 5.79 Gbits/s */
+		else if( totalmb >= 100 )
+			return String.format( "%4d Mbits/s", (long)totalmb ); /**  100 Mbits/s */
+		else if( totalmb >= 10 )
+			return String.format( "%4d Mbits/s", (long)totalmb ); /**   10 Mbits/s */
+		else
+			return String.format( "%4.2f Mbits/s", totalmb );     /**  1.0 Mbits/s */
 	}
 
 	/** Returns value as string with thousands separators */

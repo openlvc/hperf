@@ -64,6 +64,7 @@ public class Configuration
 	private boolean isTimestepped;
 
 	private boolean printEventLog;
+	private boolean printMegabits;
 	private String csvFile;
 
 	//----------------------------------------------------------
@@ -100,6 +101,7 @@ public class Configuration
 		this.isTimestepped = false;
 		
 		this.printEventLog = false;
+		this.printMegabits = false;
 		this.csvFile = null;
 	}
 	
@@ -139,6 +141,7 @@ public class Configuration
 		temp.isImmediateCallbackMode = this.isImmediateCallbackMode;
 		
 		temp.printEventLog = this.printEventLog;
+		temp.printMegabits = this.printMegabits;
 		temp.csvFile = this.csvFile;
 		
 		return temp;
@@ -313,6 +316,12 @@ public class Configuration
 		return this.printEventLog;
 	}
 
+	/** Print results in megabits-per-second, or megabytes-per-second */
+	public boolean isPrintMegabits()
+	{
+		return this.printMegabits;
+	}
+	
 	public boolean getExportCSV()
 	{
 		return this.csvFile != null;
@@ -517,6 +526,13 @@ public class Configuration
 				continue;
 			}
 			
+			if( argument.startsWith("--print-megabits") )
+			{
+				this.printMegabits = true;
+				count++;
+				continue;
+			}
+
 			if( argument.startsWith("--print-interval") )
 			{
 				validateArgIsValue( argument, args[count+1] );

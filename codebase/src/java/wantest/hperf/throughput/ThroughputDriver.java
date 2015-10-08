@@ -166,8 +166,8 @@ public class ThroughputDriver implements IDriver
 				// throughput per second
 				long periodSentBytes = periodSentCount * packetSize;
 				long periodRecvBytes = periodRecvCount * packetSize;
-				String sentMbps = Utils.getSizeStringPerSec(periodSentBytes/periodSeconds, 2);
-				String recvMbps = Utils.getSizeStringPerSec(periodRecvBytes/periodSeconds, 2);
+				String sentMbps = getThroughputString( periodSentBytes / periodSeconds );
+				String recvMbps = getThroughputString( periodRecvBytes / periodSeconds );
 				
 				// log it all for the people
 				String formatString = "[%-6d] -- %5dms, send %10s (%5d/s) -- recv %10s (%5d/s)";
@@ -214,6 +214,14 @@ public class ThroughputDriver implements IDriver
 			// value has been specified - just use it
 			return configuration.getPrintInterval();
 		}
+	}
+
+	private String getThroughputString( double bytesPerSecond )
+	{
+		if( configuration.isPrintMegabits() )
+			return Utils.getMegabitsPerSec( bytesPerSecond*8.0 );
+		else
+			return Utils.getMegabytesPerSec( bytesPerSecond, 2 );
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////

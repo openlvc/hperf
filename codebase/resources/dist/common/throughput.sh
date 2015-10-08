@@ -16,6 +16,7 @@ function printUsage()
 	echo "                                                This argument has no effect in immediate callback mode"
 	echo "    --log-level          [string]    (optional) TRACE | DEBUG | INFO | WARN | FATAL | OFF, default INFO"
 	echo "    --print-interval     [number]    (optional) Print status update every X iterations, default 10% of loops"
+	echo "    --print-megabits                 (optional) If specified, prints throughput in megabits-per-second"
 	echo "    --print-event-log                (optional) If specified, prints a list of vital stats on all events"
 	echo "    --export-cvs         [string]    (optional) File to dump event list to. No export if not provided"
 	echo ""
