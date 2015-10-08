@@ -55,6 +55,7 @@ public class TestRunner
 	private Configuration configuration;
 	
 	private RTIambassador rtiamb;
+	private FederateAmbassador fedamb;
 	private Storage storage;
 	private IDriver driver;
 
@@ -67,8 +68,9 @@ public class TestRunner
 		this.configuration = configuration;
 		initializeLogging();
 
-		this.rtiamb = null; // created during createAndJoinFederate()
 		this.storage = new Storage();
+		this.rtiamb = null; // created during createAndJoinFederate()
+		this.fedamb = new FederateAmbassador( configuration, storage );
 		this.driver = null; // created during execute()
 	}
 
@@ -110,7 +112,7 @@ public class TestRunner
 		/////////////////////////
 		// Main test execution //
 		/////////////////////////
-		this.driver.execute( rtiamb );
+		this.driver.execute( rtiamb, fedamb );
 
 		// Get out of here
 		this.resignAndDestroy();
@@ -166,7 +168,7 @@ public class TestRunner
 		logger.info( "Connecting..." );
 		CallbackModel cbmodel = configuration.isImmediateCallback() ? CallbackModel.HLA_IMMEDIATE :
 		                                                              CallbackModel.HLA_EVOKED;
-		rtiamb.connect( this.driver.getFederateAmbassador(), cbmodel );
+		rtiamb.connect( fedamb, cbmodel );
 
 		//////////////////////////////
 		// 3. create the federation //

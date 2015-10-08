@@ -20,7 +20,6 @@
  */
 package hperf;
 
-import hla.rti1516e.FederateAmbassador;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.exceptions.RTIexception;
 import hperf.config.Configuration;
@@ -36,11 +35,9 @@ public interface IDriver
 
 	public void configure( Configuration configuration, Storage storage );
 
-	public FederateAmbassador getFederateAmbassador();
-	
 	public void printWelcomeMessage();
 
-	public void execute( RTIambassador rtiamb )
+	public void execute( RTIambassador rtiamb, FederateAmbassador fedamb )
 		throws RTIexception;
 }
 

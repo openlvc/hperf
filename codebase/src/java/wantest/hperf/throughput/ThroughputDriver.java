@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateAmbassador;
 import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.RTIambassador;
@@ -38,6 +37,7 @@ import hla.rti1516e.time.HLAfloat64TimeFactory;
 import hperf.IDriver;
 import hperf.Storage;
 import hperf.TestFederate;
+import hperf.FederateAmbassador;
 import hperf.Utils;
 import hperf.config.Configuration;
 import hperf.config.LoggingConfigurator;
@@ -56,7 +56,7 @@ public class ThroughputDriver implements IDriver
 	private Configuration configuration;
 	private Storage storage;
 	private RTIambassador rtiamb;
-	private ThroughputFedAmb fedamb;
+	private FederateAmbassador fedamb;
 
 	private List<ObjectInstanceHandle> myObjects;
 	private byte[] payload;
@@ -96,9 +96,10 @@ public class ThroughputDriver implements IDriver
 	 * 
 	 * Once complete, all results will be stored in the provided {@link Storage} object.
 	 */
-	public void execute( RTIambassador rtiamb ) throws RTIexception
+	public void execute( RTIambassador rtiamb, FederateAmbassador fedamb ) throws RTIexception
 	{
 		this.rtiamb = rtiamb;
+		this.fedamb = fedamb;
 		this.payload = Utils.generatePayload( configuration.getPacketSize() );
 
 		// Enable time policy if we use it
@@ -455,7 +456,7 @@ public class ThroughputDriver implements IDriver
 		this.configuration = configuration;
 		this.logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
 		this.storage = storage;
-		this.fedamb = new ThroughputFedAmb( configuration, storage );
+		this.fedamb = new FederateAmbassador( configuration, storage );
 	}
 
 	@Override
@@ -495,12 +496,6 @@ public class ThroughputDriver implements IDriver
 	public String getName()
 	{
 		return "Throughput Test";
-	}
-
-	@Override
-	public FederateAmbassador getFederateAmbassador()
-	{
-		return this.fedamb;
 	}
 
 	/**

@@ -18,10 +18,11 @@
  *   specific language governing permissions and limitations
  *   under the License.
  */
-package hperf.throughput;
+package hperf;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 
@@ -37,15 +38,12 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
-import hperf.Handles;
-import hperf.Storage;
-import hperf.TestFederate;
-import hperf.Utils;
 import hperf.config.Configuration;
+import hperf.latency.LatencyEvent;
 
 import static hperf.Handles.*;
 
-public class ThroughputFedAmb extends NullFederateAmbassador
+public class FederateAmbassador extends NullFederateAmbassador
 {
 	//----------------------------------------------------------
 	//                    STATIC VARIABLES
@@ -67,10 +65,16 @@ public class ThroughputFedAmb extends NullFederateAmbassador
 	public boolean timeRegulating;
 	public long currentTime;
 
+	// latency test settings
+	public LatencyEvent currentLatencyEvent;
+	public ConcurrentLinkedQueue<Integer> pingReceived;
+	public Object pingSignal; // object we use to signal to other thread that ping has been received 
+
+
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public ThroughputFedAmb( Configuration configuration, Storage storage )
+	public FederateAmbassador( Configuration configuration, Storage storage )
 	{
 		this.logger = Logger.getLogger( "wt" );
 		this.configuration = configuration;
@@ -84,6 +88,11 @@ public class ThroughputFedAmb extends NullFederateAmbassador
 		this.timeConstrained = false;
 		this.timeRegulating = false;
 		this.currentTime = 0;
+		
+		// latency test settings
+		this.currentLatencyEvent = null;
+		this.pingReceived = new ConcurrentLinkedQueue<Integer>();
+		this.pingSignal = new Object();
 	}
 
 	//----------------------------------------------------------
@@ -166,7 +175,20 @@ public class ThroughputFedAmb extends NullFederateAmbassador
 	                                SupplementalReceiveInfo receiveInfo )
 	    throws FederateInternalError
 	{
-		
+		if( interactionClass.equals(IC_PING) )
+			handlePing( parameters );
+		else if( interactionClass.equals(IC_PING_ACK) )
+			handlePingAck( parameters );
+		else if( interactionClass.equals(IC_THROUGHPUT) )
+			handleThroughputInteraction( interactionClass, parameters );
+	}
+
+	///
+	/// Throughput Interaction Handling Methods
+	///
+	private void handleThroughputInteraction( InteractionClassHandle interactionClass,
+	                                          ParameterHandleValueMap parameters )
+	{
 		// validate the data blob received
 		byte[] payload = parameters.getValueReference(PC_THROUGHPUT_PAYLOAD).array();
 		if( configuration.getValidateData() )
@@ -181,6 +203,67 @@ public class ThroughputFedAmb extends NullFederateAmbassador
 		storage.recordInteraction( interactionClass, sender );
 	}
 	
+	///
+	/// Latency Interaction Handling Methods
+	///
+	
+	/**
+	 * Handle a received Ping event that we need to respond to.
+	 */
+	private void handlePing( ParameterHandleValueMap parameters )
+	{
+		// get the serial out
+		int serial = Utils.bytesToInt( parameters.getValueReference(PC_PING_SERIAL).array() );
+
+		// validate the payload data if we've been asked to
+		if( configuration.getValidateData() )
+		{
+			// validate the data only if we're told to - will hurt latency!
+			Utils.verifyPayload( parameters.getValueReference(PC_PING_PAYLOAD).array(),
+			                     configuration.getPacketSize(),
+			                     logger );
+		}
+
+		// let the people waiting on a ping know that it is here
+		synchronized( pingSignal )
+		{
+			this.pingReceived.add( serial );
+			this.pingSignal.notifyAll();
+		}
+	}
+
+	/**
+	 * Have received a response to a Ping (perhaps it is ours!)
+	 */
+	private void handlePingAck( ParameterHandleValueMap parameters )
+	{
+		// stop the clock!
+		long receivedTimestamp = System.nanoTime();
+
+		// are we waiting for responses?
+		if( this.currentLatencyEvent == null )
+			return;
+
+		// find the TestFederate for the sender & record the timestamp
+		String sender = new String( parameters.getValueReference(PC_PING_ACK_SENDER).array() );
+		TestFederate federate = storage.getPeer( sender );
+		this.currentLatencyEvent.addResponse( federate, receivedTimestamp );
+
+		// validate the payload data if we've been asked to
+		if( configuration.getValidateData() )
+		{
+			// validate the data only if we're told to - will hurt latency!
+			Utils.verifyPayload( parameters.getValueReference(PC_PING_ACK_PAYLOAD).array(),
+			                     configuration.getPacketSize(),
+			                     logger );
+		}
+		
+		synchronized( pingSignal )
+		{
+			this.pingSignal.notifyAll();
+		}
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Time Management Methods ///////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////

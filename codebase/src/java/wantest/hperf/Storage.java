@@ -23,10 +23,12 @@ package hperf;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
+import hperf.latency.LatencyEvent;
 
 /**
  * This class is used to store event information that is accumulated during throughput
@@ -35,7 +37,6 @@ import hla.rti1516e.ObjectInstanceHandle;
  * put information into them. At the conclusion of the tests, the stored results are passed
  * to the report generators for each test federate.
  */
-
 public class Storage
 {
 	//----------------------------------------------------------
@@ -54,12 +55,11 @@ public class Storage
 	private AtomicInteger discoverEvents;
 	private AtomicInteger reflectEvents;
 	private AtomicInteger interactionEvents;
-//	private int discoverEvents;
-//	private int reflectEvents;
-//	private int interactionEvents;
 	private long throughputTestStartTime;
 	private long throughputTestStopTime;
 	
+	// latency specific data
+	private ConcurrentLinkedQueue<LatencyEvent> latencyEvents;
 
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
@@ -74,11 +74,11 @@ public class Storage
 		this.discoverEvents = new AtomicInteger(0);
 		this.reflectEvents = new AtomicInteger(0);
 		this.interactionEvents = new AtomicInteger(0);
-//		this.discoverEvents = 0;
-//		this.reflectEvents = 0;
-//		this.interactionEvents = 0;
 		this.throughputTestStartTime = 0;
 		this.throughputTestStopTime = 0;
+		
+		// latency specific data
+		this.latencyEvents = new ConcurrentLinkedQueue<LatencyEvent>();
 	}
 
 	//----------------------------------------------------------
@@ -93,7 +93,6 @@ public class Storage
 	public void recordDiscover( ObjectInstanceHandle objectHandle, TestFederate owner )
 	{
 		discoverEvents.incrementAndGet();
-//		++discoverEvents;
 
 		// tell the owning federate about the object
 		owner.recordDiscover( objectHandle );
@@ -105,14 +104,12 @@ public class Storage
 	public void recordReflect( ObjectInstanceHandle objectHandle )
 	{
 		reflectEvents.incrementAndGet();
-//		++reflectEvents;
 		objectOwners.get(objectHandle).recordReflect( objectHandle );
 	}
 	
 	public void recordInteraction( InteractionClassHandle interactionClass, TestFederate sender )
 	{
 		interactionEvents.incrementAndGet();
-//		++interactionEvents;
 		sender.recordInteraction( interactionClass );
 	}
 	
@@ -143,6 +140,19 @@ public class Storage
 	public TestFederate getLocalFederate()
 	{
 		return this.localFederate;
+	}
+
+	///
+	/// Latency Event Storage
+	///
+	public void addLatencyEvent( LatencyEvent event )
+	{
+		this.latencyEvents.add( event );
+	}
+	
+	public ConcurrentLinkedQueue<LatencyEvent> getLatencyEvents()
+	{
+		return this.latencyEvents;
 	}
 
 	///////////////////
