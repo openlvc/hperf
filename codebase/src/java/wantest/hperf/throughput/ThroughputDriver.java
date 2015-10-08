@@ -123,6 +123,8 @@ public class ThroughputDriver implements IDriver
 		//////////////////////////////////////////////////////////////////////////////
 		int batchSize = getBatchSize();
 		int packetSize = configuration.getPacketSize();
+		int reflectsPerLoop = configuration.getObjectCount();
+		int interactionsPerLoop = configuration.getInteractionCount();
 		int lastEventCount = 0;
 		long lastTimestamp = System.nanoTime();
 
@@ -139,35 +141,46 @@ public class ThroughputDriver implements IDriver
 			// Well, that got out of hand. One line to loop, a bajillion to watch when we start/stop
 			if( i % batchSize == 0 && i != 0 )
 			{
-				// duration
-				long now = System.nanoTime();
-				long duration = TimeUnit.NANOSECONDS.toMillis( now - lastTimestamp );
-				double seconds = duration / 1000.0;
-				
 				// events total and per-second
-				int sentCount         = configuration.getObjectCount() + 
-				                        configuration.getInteractionCount() *
-				                        batchSize;
-				int sentPerSecond     = (int)(sentCount / seconds);
+				// [100   ] -- 19806ms, send  25.24MB/s (50489/s) -- recv  23.82MB/s (47646/s)
+				// [LOOP  ] --  TIMEms, send  SENTMBPS  (MSG/S)   -- recv  REVCMBPS  (MSG/S)
 
-				int eventCount        = storage.getThroughputEventCount() - sentCount;
-				int receivedCount     = eventCount - lastEventCount;
-				int receivedPerSecond = (int)(receivedCount / seconds);
+				// stuff we want to capture quickly, and once
+				long now = System.nanoTime();
+				int overallEventCount = storage.getThroughputEventCount();
+
+				// event counters
+				int periodEventCount = overallEventCount - lastEventCount;
+				int periodSentCount = (reflectsPerLoop+interactionsPerLoop) * batchSize;
+				int periodRecvCount = periodEventCount - periodSentCount;
+
+				// duration
+				long periodMillis = TimeUnit.NANOSECONDS.toMillis( now - lastTimestamp );
+				double periodSeconds = periodMillis / 1000.0;
+				
+				// messages per second
+				int sentPerSecond = (int)(periodSentCount / periodSeconds);
+				int recvPerSecond = (int)(periodRecvCount / periodSeconds);
 				
 				// throughput per second
-				long totalbytes     = (long)receivedCount * (long)packetSize;
-				String receivedmbps = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
-				totalbytes          = (long)sentCount * (long)packetSize;
-				String sentmbps     = Utils.getSizeStringPerSec( totalbytes / seconds, 2 );
-
+				long periodSentBytes = periodSentCount * packetSize;
+				long periodRecvBytes = periodRecvCount * packetSize;
+				String sentMbps = Utils.getSizeStringPerSec(periodSentBytes/periodSeconds, 2);
+				String recvMbps = Utils.getSizeStringPerSec(periodRecvBytes/periodSeconds, 2);
+				
 				// log it all for the people
-				String msg = "[%-6d] -- %5dms, send %10s (%5d/s) -- recv %10s (%5d/s)";
-				logger.info( String.format(msg,i,duration,sentmbps,sentPerSecond,
-				                           receivedmbps,receivedPerSecond) );
+				String formatString = "[%-6d] -- %5dms, send %10s (%5d/s) -- recv %10s (%5d/s)";
+				logger.info( String.format( formatString,
+				                            i,
+				                            periodMillis,
+				                            sentMbps,
+				                            sentPerSecond,
+				                            recvMbps,
+				                            recvPerSecond ) );
 				
 				// reset the batch variables so we can compare next time
 				lastTimestamp = now;
-				lastEventCount = eventCount;
+				lastEventCount = overallEventCount;
 			}
 		}
 
@@ -414,8 +427,9 @@ public class ThroughputDriver implements IDriver
 				for( TestFederate federate : notfinished )
 				{
 					int remaining = expectedPerFederate - federate.getEventCount();
+					double percentage = ((double)remaining / (double)expectedPerFederate) * 100.0;
 					logger.info( "  - "+federate.getFederateName()+": "+remaining+" events to go"+
-					             " -- "+(int)(remaining/expectedPerFederate)+"%" );
+					             " -- "+(int)(percentage)+"%" );
 				}
 
 				nextScheduledReport = System.currentTimeMillis() + 5000;
@@ -447,6 +461,7 @@ public class ThroughputDriver implements IDriver
 	@Override
 	public void printWelcomeMessage()
 	{
+		int peers = configuration.getPeers().size();
 		int loops = configuration.getLoopCount();
 		int objects = configuration.getObjectCount();
 		int interactions = configuration.getInteractionCount();
@@ -460,15 +475,16 @@ public class ThroughputDriver implements IDriver
 		logger.info( " =     Running Throughput Test     =" );
 		logger.info( " ===================================" );
 		logger.info( "" );
-		logger.info( "  Min Messsage Size = "+Utils.getSizeString(packetSize) );
+		logger.info( "      Messsage Size = "+Utils.getSizeString(packetSize) );
 		logger.info( "         Loop Count = "+configuration.getLoopCount() );
 		logger.info( "       Object Count = "+configuration.getObjectCount() );
 		logger.info( "  Interaction Count = "+configuration.getInteractionCount() );
-		logger.info( "  Messages Per Loop = "+messages+" ("+objects+" updates, "+interactions+" interactions)" );
-		logger.info( "     Total Messages = "+messages * loops );
-		logger.info( "              Peers = "+configuration.getPeers().size() );
+		logger.info( "  Messages Per Loop = "+Utils.getFormatted(messages)+" ("+objects+" updates, "+interactions+" interactions)" );
+		logger.info( "         Total Sent = "+Utils.getFormatted(messages*loops) );
+		logger.info( "              Peers = "+peers );
 		logger.info( "    Total Send Size = "+Utils.getSizeString(sendSize,2).trim() );
 		logger.info( "    Total Revc Size = "+Utils.getSizeString(recvSize,2).trim() );
+		logger.info( "     Total Messages = "+Utils.getFormatted(messages*loops*(peers+1)) );
 		logger.info( "" );
 	}
 

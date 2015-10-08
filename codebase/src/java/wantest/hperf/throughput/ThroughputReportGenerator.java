@@ -140,7 +140,7 @@ public class ThroughputReportGenerator
 		// build up the report string
 		int expectedDiscovers = configuration.getObjectCount();
 		int expectedReflects = configuration.getObjectCount() * configuration.getLoopCount();
-		int expectedInteractions = expectedReflects;
+		int expectedInteractions = configuration.getInteractionCount() * configuration.getLoopCount();
 		String discoverProblem = (actualDiscovers != expectedDiscovers) ? "(!!)" : "";
 		String reflectProblem = (actualReflects != expectedReflects) ? "(!!)" : "";
 		String interactionProblem = (actualInteractions != expectedInteractions) ? "(!!)" : "";

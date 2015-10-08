@@ -20,6 +20,8 @@
  */
 package hperf;
 
+import java.text.NumberFormat;
+
 import org.apache.log4j.Logger;
 
 public class Utils
@@ -136,6 +138,12 @@ public class Utils
 			return String.format( "%5."+decimalPlaces+"fMB/s", totalmb );
 		else
 			return String.format( "%5."+decimalPlaces+"fKB/s", totalkb );
+	}
+
+	/** Returns value as string with thousands separators */
+	public static String getFormatted( int value )
+	{
+		return NumberFormat.getIntegerInstance().format( value );
 	}
 
 	/** 
