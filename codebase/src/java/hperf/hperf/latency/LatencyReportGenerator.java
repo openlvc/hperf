@@ -31,6 +31,8 @@ import org.apache.log4j.Logger;
 import hperf.Storage;
 import hperf.TestFederate;
 import hperf.Utils;
+import hperf.config.Configuration;
+import hperf.config.LoggingConfigurator;
 
 /**
  * This class takes the information that was gathered during the latency test, does a
@@ -51,9 +53,9 @@ public class LatencyReportGenerator
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
-	public LatencyReportGenerator( Storage storage )
+	public LatencyReportGenerator( Configuration configuration, Storage storage )
 	{
-		this.logger = Logger.getLogger( "wt" ); // TODO Fix me for JVM federations
+		this.logger = LoggingConfigurator.getLogger( configuration.getFederateName() );
 		this.storage = storage;
 	}
 
@@ -96,7 +98,9 @@ public class LatencyReportGenerator
 		}
 		
 		logger.info( "    ---------------------------------------------------" );
-		logger.info( "" );
+		logger.info( "     ** Note: These values represent two-way latency (time taken" );
+		logger.info( "              to send a message and have a response arrive)" );
+		logger.info( "              Halve the values for point-to-point latency." );
 	}
 
 	/**

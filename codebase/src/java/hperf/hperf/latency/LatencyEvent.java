@@ -1,7 +1,7 @@
 /*
  *   Copyright 2015 Calytrix Technologies
  *
- *   This file is part of wantest.
+ *   This file is part of hperf.
  *
  *   NOTICE:  All information contained herein is, and remains
  *            the property of Calytrix Technologies Pty Ltd.

@@ -9,8 +9,6 @@
       together to help make navigation of a large structure as easy
       as possible. For full details, see the online documentation:
 
-             https://github.com/timpokorny/build-skeleton
-
          File: profiles/system.properties.xml
       Purpose: Defines project-wide properties, such as the version
                name/number and the location of top-level directories.

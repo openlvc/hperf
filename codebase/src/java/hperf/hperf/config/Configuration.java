@@ -72,12 +72,12 @@ public class Configuration
 	//----------------------------------------------------------
 	public Configuration()
 	{
-		this.configurationFile = new File( "wantest.config" );
+		this.configurationFile = new File( "hperf.config" );
 		this.loglevel = "INFO";
 		
 		// federate settings
 		this.federationName = "test-fed";
-		this.federateName = "wantest1";
+		this.federateName = "hperf1";
 		this.jvmFederation = false;
 		this.jvmMaster = false;
 		
@@ -340,9 +340,9 @@ public class Configuration
 	public void loadCommandLine( String[] args )
 	{
 		/*
-    		--federate-name wantest1
-    		--federation-name wantest
-    		--peers wantest2,wantest3
+    		--federate-name hperf1
+    		--federation-name hperf
+    		--peers hperf2,hperf3
     		--loops 20
     		--packet-size 32B/KB/MB
     		--loop-wait 100

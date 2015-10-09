@@ -9,8 +9,6 @@
       together to help make navigation of a large structure as easy
       as possible. For full details, see the online documentation:
 
-             https://github.com/timpokorny/build-skeleton
-
          File: profiles/macosx/installer.xml
       Purpose: Defines tasks to build the macosx installation packages.
 -->

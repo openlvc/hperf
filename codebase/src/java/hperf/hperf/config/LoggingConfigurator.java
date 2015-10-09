@@ -58,7 +58,7 @@ public class LoggingConfigurator
 		ConsoleAppender appender = new ConsoleAppender( layout, ConsoleAppender.SYSTEM_OUT );
 		appender.setThreshold( Level.TRACE ); // output restricted at logger level, not appender
 		
-		Logger logger = Logger.getLogger( "wt" );
+		Logger logger = Logger.getLogger( "hp" );
 		logger.addAppender( appender );
 		logger.setLevel( Level.INFO );
 		
@@ -67,6 +67,6 @@ public class LoggingConfigurator
 	
 	public static Logger getLogger( String federateName )
 	{
-		return Logger.getLogger( "wt."+federateName );
+		return Logger.getLogger( "hp."+federateName );
 	}
 }

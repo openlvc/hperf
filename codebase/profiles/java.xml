@@ -9,8 +9,6 @@
       together to help make navigation of a large structure as easy
       as possible. For full details, see the online documentation:
 
-             https://github.com/timpokorny/build-skeleton
-
          File: profiles/java.xml
       Purpose: The common java profile defining compile, test, jar
                and sandbox tasks. As Java is cross platform, it is
@@ -33,9 +31,9 @@
 	<property name="resources.jars.dir"       location="${resources.dir}/jars"/>
 
 	<!-- ==== Source Related Properties ==== -->
-	<property name="wantest.src.dir"          location="${java.src.dir}/wantest"/>
-	<property name="wantest.build.dir"        location="${java.build.dir}/wantest"/>
-	<property name="wantest.classes.dir"      location="${wantest.build.dir}/classes"/>
+	<property name="hperf.src.dir"          location="${java.src.dir}/hperf"/>
+	<property name="hperf.build.dir"        location="${java.build.dir}/hperf"/>
+	<property name="hperf.classes.dir"      location="${hperf.build.dir}/classes"/>
 
 	<!-- ==== Javadoc Related Properties ==== -->
 	<property name="javadoc.oracle"           value="http://docs.oracle.com/javase/7/docs/api/"/>
@@ -81,7 +79,7 @@
 	<path id="test.classpath">
 		<path refid="compile.classpath"/>
 		<path refid="lib.testng.classpath"/>
-		<pathelement path="${wantest.classes.dir}"/>
+		<pathelement path="${hperf.classes.dir}"/>
 		<pathelement path="${test.classes.dir}"/>
 		<pathelement path="${resources.dir}/jars/MYPROJECT.jar"/>
 		<pathelement path="${resources.dir}/testdata"/>
@@ -107,9 +105,9 @@
 	                 description="Compile the main projection and test modules"/>
 
 	<!-- compile the main production code -->	
-	<target name="compile.wantest" extensionOf="compile">
-		<java-compile srcdir="${wantest.src.dir}"
-		              outdir="${wantest.classes.dir}"
+	<target name="compile.hperf" extensionOf="compile">
+		<java-compile srcdir="${hperf.src.dir}"
+		              outdir="${hperf.classes.dir}"
 		              classpath="compile.classpath"/>
 	</target>
 
@@ -156,27 +154,27 @@
 
 	<!-- EXAMPLE: Remember to adjust for MYPROJECT or remove entirely -->
 	<!-- build the main jar file -->
-	<target name="jar.wantest" extensionOf="jars" depends="compile">
-		<!-- construct the main wantest jar file -->
-		<jar destfile="${sandbox.dir}/lib/wantest.jar">
-			<!-- wantest code -->
-			<fileset dir="${wantest.classes.dir}" includes="**/*.class"/>
+	<target name="jar.hperf" extensionOf="jars" depends="compile">
+		<!-- construct the main hperf jar file -->
+		<jar destfile="${sandbox.dir}/lib/hperf.jar">
+			<!-- hperf code -->
+			<fileset dir="${hperf.classes.dir}" includes="**/*.class"/>
 			
 			<!-- internal jar resources -->
-			<fileset dir="${resources.jars.dir}/wantest.jar" includes="**/*"/>
+			<fileset dir="${resources.jars.dir}/hperf.jar" includes="**/*"/>
 
 			<!-- license -->
-			<fileset dir="${basedir}" includes="LICENSE.wantest"/>
+			<fileset dir="${basedir}" includes="LICENSE.hperf"/>
 
 			<!-- build.properties file for version information -->
 			<fileset dir="${basedir}" includes="build.properties"/>
 
 			<!-- MANIFEST -->
 			<manifest>
-				<attribute name="Main-Class" value="wantest.Main"/>
+				<attribute name="Main-Class" value="hperf.Main"/>
 				<attribute name="Built-By" value="Calytrix Technologies"/>
-				<section name="wantest">
-					<attribute name="Implementation-Title" value="wantest"/>
+				<section name="hperf">
+					<attribute name="Implementation-Title" value="hperf"/>
 					<attribute name="Implementation-Version" value="${build.version} (build ${build.number}) ${TODAY}"/>
 					<attribute name="Implementation-Vendor" value="Calytrix Technologies"/>
 				</section>

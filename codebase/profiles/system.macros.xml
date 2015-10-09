@@ -9,8 +9,6 @@
       together to help make navigation of a large structure as easy
       as possible. For full details, see the online documentation:
 
-             https://github.com/timpokorny/build-skeleton
-
          File: profiles/system.macros.xml
       Purpose: This file contains a set of common macros used across
                most projects this system has been designed for.

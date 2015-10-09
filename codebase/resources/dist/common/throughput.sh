@@ -5,7 +5,7 @@ function printUsage()
 	echo "usage: throughput.sh [--arg <value>]"
 	echo ""
 	echo "    --federate-name      [stirng]    (REQUIRED) Name for this federate"
-	echo "    --federation-name    [string]    (optional) Name of the federation we're joining, default wantest"
+	echo "    --federation-name    [string]    (optional) Name of the federation we're joining, default hperf"
 	echo "    --loops              [number]    (optional) Number of loops we should iterate for, default 20"
 	echo "    --peers              [list]      (REQUIRED) Comma-separated list of other federate names"
 	echo "    --packet-size        [number]    (optional) Min size of messages. e.g. 1B, 1K, 1M, default 1K"
@@ -17,8 +17,6 @@ function printUsage()
 	echo "    --log-level          [string]    (optional) TRACE | DEBUG | INFO | WARN | FATAL | OFF, default INFO"
 	echo "    --print-interval     [number]    (optional) Print status update every X iterations, default 10% of loops"
 	echo "    --print-megabits                 (optional) If specified, prints throughput in megabits-per-second"
-	echo "    --print-event-log                (optional) If specified, prints a list of vital stats on all events"
-	echo "    --export-cvs         [string]    (optional) File to dump event list to. No export if not provided"
 	echo ""
 	exit;
 }
@@ -41,6 +39,6 @@ fi
 ############################################
 ### (target) execute #######################
 ############################################
-echo -e "Starting WAN Test Federate (use --help to display usage)"
-java -cp ./lib/wantest.jar:./lib/portico/2.1.0/portico.jar hperf.Main --throughput-test $*
+echo -e "Starting HPerf Test Federate (use --help to display usage)"
+java -cp ./lib/hperf.jar:./lib/portico/2.1.0/portico.jar hperf.Main --throughput-test $*
 
