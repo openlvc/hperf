@@ -138,6 +138,21 @@
 		<!-- chmod anything in a bin directory -->
 		<chmod dir="${sandbox.dir}" perm="777" includes="bin/**/*,**/*.sh"/>
 
+		<!-- copy across the README.md from the root of the repo -->
+		<copy todir="${sandbox.dir}">
+			<fileset dir="${basedir}/../" includes="README.md"/>
+		</copy>
+
+		<!-- copy across the README.md from the root of the repo -->
+		<copy todir="${sandbox.dir}">
+			<fileset dir="${basedir}/../" includes="README.md"/>
+		</copy>
+
+		<!-- copy across the LICENSE from the root of the repo -->
+		<copy todir="${sandbox.dir}">
+			<fileset dir="${basedir}/" includes="LICENSE.hperf"/>
+		</copy>
+
 		<!-- Run platform specific fixes such as fixing crlf for Windows bound files! -->
 		
 	</target>
