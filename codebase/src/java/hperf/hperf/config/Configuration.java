@@ -129,6 +129,7 @@ public class Configuration
 		temp.loopCount = this.loopCount;
 		temp.loopWait = this.loopWait;
 		temp.objectCount = this.objectCount;
+		temp.interactionCount = this.interactionCount;
 		temp.packetSize = this.packetSize;
 		temp.validateData = this.validateData;
 		temp.peers = peers;
