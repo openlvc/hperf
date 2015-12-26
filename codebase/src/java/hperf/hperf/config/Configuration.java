@@ -55,11 +55,12 @@ public class Configuration
 	private int packetSize;  // the minimum size of each update in kb
 	private boolean validateData;
 	private List<String> peers;
-	private boolean latencySender;  // is this the sender for the latency federate?
+	private boolean sender;  // is this the sender for the latency or lifecycle federates?
 	private int printInterval;  // number of loops at which to print throughput federate status
 
 	private boolean runThroughputTest;
 	private boolean runLatencyTest;
+	private boolean runLifecycleTest;
 	private boolean isImmediateCallbackMode;
 	private boolean isTimestepped;
 
@@ -89,12 +90,13 @@ public class Configuration
 		this.packetSize = 1000;
 		this.validateData = false;
 		this.peers = new ArrayList<String>();
-		this.latencySender = false;
+		this.sender = false;
 		this.printInterval = -1;
 
 		// default to run neither test unless instructed
 		this.runThroughputTest = false;
 		this.runLatencyTest = false;
+		this.runLifecycleTest = false;
 		
 		// what is our callback mode? Immediate or Evoked?
 		this.isImmediateCallbackMode = true;
@@ -262,17 +264,17 @@ public class Configuration
 	}
 
 	// Execution and Misc Options
-	/** Is this federate the one that sends the ping requests for the latency test? */
-	public boolean isLatencySender()
+	/** Should this federate send the ping requests for the latency and lifecycle tests? */
+	public boolean isSender()
 	{
-		return this.latencySender;
+		return this.sender;
 	}
 
-	/** Set whether or not this federate is a latency sender. Only done to support
+	/** Set whether or not this federate is a latency/lifecycle sender. Only done to support
 	    federates running using the JVM binding */
-	public void setLatencySender( boolean sender )
+	public void setSender( boolean sender )
 	{
-		this.latencySender = sender;
+		this.sender = sender;
 	}
 
 	/** Number of iterations that should happen before we print a status update for the
@@ -292,6 +294,12 @@ public class Configuration
 	public boolean isLatencyTestEnabled()
 	{
 		return this.runLatencyTest;
+	}
+
+	/** Should the lifecycle test be run? */
+	public boolean isLifecycleTestEnabled()
+	{
+		return this.runLifecycleTest;
 	}
 
 	/** Are we using the immediate callback mode? (default to true) */
@@ -358,7 +366,7 @@ public class Configuration
 			if( argument.startsWith("--") == false )
 				throw new RuntimeException( "Unknown argument: ["+argument+"]" );
 			
-			if( argument.startsWith("--loglevel") )
+			if( argument.startsWith("--loglevel") || argument.startsWith("--log-level") )
 			{
 				validateArgIsValue( argument, args[count+1] );
 				this.loglevel = args[count+1];
@@ -472,7 +480,7 @@ public class Configuration
 
 			if( argument.startsWith("--sender") )
 			{
-				this.latencySender = true;
+				this.sender = true;
 				count++;
 				continue;
 			}
@@ -487,6 +495,13 @@ public class Configuration
 			if( argument.startsWith("--latency-test") )
 			{
 				this.runLatencyTest = true;
+				count++;
+				continue;
+			}
+			
+			if( argument.startsWith("--lifecycle-test") )
+			{
+				this.runLifecycleTest = true;
 				count++;
 				continue;
 			}

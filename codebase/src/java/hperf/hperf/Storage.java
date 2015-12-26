@@ -113,6 +113,20 @@ public class Storage
 		sender.recordInteraction( interactionClass );
 	}
 	
+	public void recordDelete( ObjectInstanceHandle objectHandle )
+	{
+		objectOwners.remove( objectHandle );
+		for( TestFederate federate : peers.values().toArray(new TestFederate[]{}) )
+		{
+			if( federate.getFederateObjectHandle() != null &&
+			    federate.getFederateObjectHandle().equals(objectHandle) )
+			{
+				peers.remove( federate.getFederateName() );
+				break;
+			}
+		}
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////// Accessor and Mutator Methods ///////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,6 +143,11 @@ public class Storage
 	public TestFederate getPeer( String name )
 	{
 		return this.peers.get( name );
+	}
+	
+	public void clearPeers()
+	{
+		this.peers.clear();
 	}
 	
 	public void setLocalFederate( TestFederate federate )

@@ -48,7 +48,7 @@ public class LoggingConfigurator
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------
-	public static synchronized void initializeLogging()
+	public static synchronized void initializeLogging( String level )
 	{
 		if( CONFIGURED )
 			return;
@@ -60,7 +60,7 @@ public class LoggingConfigurator
 		
 		Logger logger = Logger.getLogger( "hp" );
 		logger.addAppender( appender );
-		logger.setLevel( Level.INFO );
+		logger.setLevel( Level.toLevel(level) );
 		
 		CONFIGURED = true;
 	}

@@ -103,7 +103,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 	/////////////////////////////// Object Handling Methods ///////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////
 
-	public void discoverObjectInstance( ObjectInstanceHandle theObject,
+	public void discoverObjectInstance( ObjectInstanceHandle objectHandle,
 	                                    ObjectClassHandle theObjectClass,
 	                                    String objectName )
 		throws FederateInternalError
@@ -113,8 +113,8 @@ public class FederateAmbassador extends NullFederateAmbassador
 			//
 			// Class: HLAobjectRoot.TestFederate
 			//
-			storage.addPeer( new TestFederate(objectName,false/*local*/) );
-			logger.info( "Discovered federate "+objectName );
+			storage.addPeer( new TestFederate(objectName,false/*isLocal*/,objectHandle) );
+			logger.info( "Discovered federate "+objectName+" (handle:"+objectHandle+")" );
 		}
 		else if( theObjectClass.equals(Handles.OC_TEST_OBJECT) )
 		{
@@ -125,7 +125,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 		}
 		
 		logger.debug( "   discoverObjectInstance(): class="+theObjectClass+
-		              ", handle="+theObject+
+		              ", handle="+objectHandle+
 		              ", name="+objectName );
 	}
 
@@ -163,7 +163,16 @@ public class FederateAmbassador extends NullFederateAmbassador
 			storage.recordReflect( theObject );
 		}
 	}
-	
+
+	public void removeObjectInstance( ObjectInstanceHandle objectHandle,
+	                                  byte[] tag,
+	                                  OrderType sent,
+	                                  SupplementalRemoveInfo info )
+		throws FederateInternalError
+	{
+		storage.recordDelete( objectHandle );
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////// Interaction Receiving Methods ////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////

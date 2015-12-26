@@ -37,6 +37,7 @@ public class TestFederate
 	//----------------------------------------------------------
 	private String federateName;
 	private boolean isLocal;
+	private ObjectInstanceHandle myHandle;
 	private HashMap<ObjectInstanceHandle,AtomicInteger> objects;
 	private int discoverEvents;
 	private int reflectEvents;
@@ -52,6 +53,7 @@ public class TestFederate
 	{
 		this.federateName = federateName;
 		this.isLocal = isLocal;
+		this.myHandle = null;
 		this.objects = new HashMap<ObjectInstanceHandle,AtomicInteger>();
 		this.discoverEvents = 0;
 		this.reflectEvents = 0;
@@ -59,6 +61,12 @@ public class TestFederate
 		
 		this.firstMessage = 0;
 		this.lastMessage = 0;
+	}
+	
+	public TestFederate( String federateName, boolean isLocal, ObjectInstanceHandle myHandle )
+	{
+		this( federateName, isLocal );
+		this.myHandle = myHandle;
 	}
 
 	//----------------------------------------------------------
@@ -183,6 +191,11 @@ public class TestFederate
 			return this.lastMessage - this.firstMessage;
 	}
 	
+	public ObjectInstanceHandle getFederateObjectHandle()
+	{
+		return this.myHandle;
+	}
+
 	//----------------------------------------------------------
 	//                     STATIC METHODS
 	//----------------------------------------------------------

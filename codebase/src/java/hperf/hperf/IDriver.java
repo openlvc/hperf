@@ -37,7 +37,19 @@ public interface IDriver
 
 	public void printWelcomeMessage();
 
+	/**
+	 * Run the main federate loop. If this is a managed federate, the federation will have
+	 * been created and joined; initial publication and subscription done, a federate object
+	 * created and other expected peers will be present.
+	 * 
+	 * If this is an unmanaged federate, the RTIambassador param will be null as we will not
+	 * have created one yet. The FederateAmbassador however is created and given to the driver
+	 * by the TestRunner.
+	 */
 	public void execute( RTIambassador rtiamb, FederateAmbassador fedamb )
 		throws RTIexception;
+	
+	/** This is true if the test wants to handle all the lifecycle management itself */
+	public boolean manageLifecycleManually();
 }
 

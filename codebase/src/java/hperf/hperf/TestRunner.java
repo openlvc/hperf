@@ -35,6 +35,7 @@ import hla.rti1516e.exceptions.*;
 import hperf.config.Configuration;
 import hperf.config.LoggingConfigurator;
 import hperf.latency.LatencyDriver;
+import hperf.lifecycle.LifecycleDriver;
 import hperf.throughput.ThroughputDriver;
 
 import static hperf.Handles.*;
@@ -89,7 +90,22 @@ public class TestRunner
 		logger.info( "  Callback Mode: "+(configuration.isImmediateCallback() ? "IMMEDIATE":"EVOKED") );
 		logger.info( "   Time Stepped: "+(configuration.isTimestepped() ? "YES":"NO") );
 		logger.info( "" );
-		
+
+		// if the whole test should be run on a loop, do things a little differently, otherwise,
+		// just go with a single execution of the lifecycle
+		if( driver.manageLifecycleManually() )
+			executeUnmanaged();
+		else
+			executeManaged();
+	}
+
+	/**
+	 * This executes the driver with managed lifecycle. Federation creation, joining, publication
+	 * and subscription, initial object registration and a wait for peers are all executed by the
+	 * runner rather than the driver. 
+	 */
+	private void executeManaged() throws Exception
+	{
 		// Create and Join the federation
 		TestFederate federate = this.createAndJoinFederation();
 		storage.setLocalFederate( federate );
@@ -119,11 +135,35 @@ public class TestRunner
 	}
 
 	/**
+	 * This executes the driver and leaves the lifecycle management entirely to it.
+	 * `TestFederate` and `Storage` objects are constructed, but the full management
+	 * of federation lifecycle (from create down) is left to the Driver, with the
+	 * `execute()` method called directly to let it do its thing.
+	 * 
+	 * NOTE: Because nothing will have been set up, there is no RTIambassador or FederateAmbassador
+	 *       to be given to `execute()`, so `null` is passed for both parameters. 
+	 */
+	private void executeUnmanaged() throws Exception
+	{
+		// Create the TestFederate class and wire it to the storage object
+		TestFederate federate = new TestFederate( configuration.getFederateName(), true );
+		storage.setLocalFederate( federate );
+
+		logger.info( "Passing execution to the Driver: "+this.driver.getName() );
+		
+		// Let it run. RUN FREE LITTLE ONE
+		this.driver.execute( null, fedamb );
+		
+		// Print a message
+		logger.info( "Driver has completed execution, exiting." );
+	}
+	
+	/**
 	 * Set up a default logger with a basic logging pattern.
 	 */
 	private void initializeLogging()
 	{
-		LoggingConfigurator.initializeLogging();
+		LoggingConfigurator.initializeLogging( configuration.getLogLevel() );
 		this.logger = LoggingConfigurator.getLogger( configuration.getFederateName() ); 
 		this.logger.setLevel( Level.INFO );
 
@@ -140,6 +180,8 @@ public class TestRunner
 			driver = new ThroughputDriver();
 		else if( configuration.isLatencyTestEnabled() )
 			driver = new LatencyDriver();
+		else if( configuration.isLifecycleTestEnabled() )
+			driver = new LifecycleDriver();
 		else
 			throw new Exception( "You must specify at least --throughput-test or --latency-test" );
 		

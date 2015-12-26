@@ -82,6 +82,10 @@ public class ThroughputDriver implements IDriver
 	//----------------------------------------------------------
 	//                    INSTANCE METHODS
 	//----------------------------------------------------------
+	public boolean manageLifecycleManually()
+	{
+		return false;
+	}
 
 	/**
 	 * Perform the core execution for the Throughput Test. This method will:

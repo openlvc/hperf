@@ -82,7 +82,7 @@ public class Main
 				local.setJvmMaster( true );
 				
 				// if we're running the latency test, flag the master as a sender
-				local.setLatencySender( true );
+				local.setSender( true );
 			}
 			
 			// run the thing
