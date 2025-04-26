@@ -46,5 +46,11 @@ fi
 ### (target) execute #######################
 ############################################
 echo -e "Starting HPerf Test Federate (use --help to display usage)"
-java -cp ./lib/hperf.jar:./lib/portico/2.1.0/portico.jar hperf.Main --latency-test $*
 
+# Change : to ; on classpath if Git Bash... because Windows
+classpath="./lib/hperf.jar:./lib/portico/portico.jar"
+if [ $(uname) != "Linux" ]; then
+	classpath=$( echo "$classpath" | tr : \; )
+fi
+
+java -cp $classpath hperf.Main --latency-test $*

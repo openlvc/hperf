@@ -107,8 +107,8 @@ welcome()
 	# print a welcome message
 	echo
 	echo "=================================================================="
-	echo "Calytrix Comm Net Radio v$VERSION Installer"
-	echo "Copyright (c) Calytrix Technologies $(date +%Y)"
+	echo "OpenLVC HPerf v$VERSION Installer"
+	echo "Copyright (c) The OpenLVC Group $(date +%Y)"
 	echo "=================================================================="
 	echo
 }

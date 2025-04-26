@@ -53,7 +53,7 @@
 	     when defining paths and the like later in the build file -->
 	<property name="testng.dir"            location="${lib.dir}/testng/testng-6.8"/>
 	<property name="log4j.dir"             location="${lib.dir}/log4j/apache-log4j-2.0-beta9"/>
-	<property name="portico.dir"           location="${lib.dir}/portico/2.1.0"/>
+	<property name="portico.dir"           location="${lib.dir}/portico"/>
 
 	<!-- Classpaths for individual libraries -->
 	<path id="lib.testng.classpath">
@@ -187,11 +187,11 @@
 			<!-- MANIFEST -->
 			<manifest>
 				<attribute name="Main-Class" value="hperf.Main"/>
-				<attribute name="Built-By" value="Calytrix Technologies"/>
+				<attribute name="Built-By" value="The OpenLVC Group"/>
 				<section name="hperf">
 					<attribute name="Implementation-Title" value="hperf"/>
 					<attribute name="Implementation-Version" value="${build.version} (build ${build.number}) ${TODAY}"/>
-					<attribute name="Implementation-Vendor" value="Calytrix Technologies"/>
+					<attribute name="Implementation-Vendor" value="The OpenLVC Group"/>
 				</section>
 			</manifest>
 		</jar>

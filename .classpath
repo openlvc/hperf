@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="codebase/src/java/hperf"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="codebase/lib/portico/2.1.0/portico.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="codebase/resources/jars/hperf.jar"/>
+	<classpathentry kind="lib" path="codebase/lib/portico/portico.jar"/>
 	<classpathentry kind="output" path="eclipse-build/classes"/>
 </classpath>
