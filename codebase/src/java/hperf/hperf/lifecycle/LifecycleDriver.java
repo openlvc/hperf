@@ -263,7 +263,7 @@ public class LifecycleDriver implements IDriver
 		///////////////////////////////////////////
 		logger.info( "Waiting for peers: "+configuration.getPeers() );
 		List<String> absentPeers = new ArrayList<String>( configuration.getPeers() );
-		absentPeers.remove( storage.getLocalFederate() );
+		absentPeers.remove( storage.getLocalFederate().getFederateName() );
 
 		while( absentPeers.isEmpty() == false )
 		{
