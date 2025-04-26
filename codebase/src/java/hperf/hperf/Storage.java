@@ -116,15 +116,20 @@ public class Storage
 	public void recordDelete( ObjectInstanceHandle objectHandle )
 	{
 		objectOwners.remove( objectHandle );
-		for( TestFederate federate : peers.values().toArray(new TestFederate[]{}) )
-		{
-			if( federate.getFederateObjectHandle() != null &&
-			    federate.getFederateObjectHandle().equals(objectHandle) )
-			{
-				peers.remove( federate.getFederateName() );
-				break;
-			}
-		}
+		
+		// Commenting this out as it can cause a race condition in the latency
+		// federate when it goes to print results. If federates resign and the objects
+		// are deleted, then they are removed as peers before we've logged their results.
+		// Was added for the Lifecycle test, so we now deal with cleaning up differently. 
+		//for( TestFederate federate : peers.values().toArray(new TestFederate[]{}) )
+		//{
+		//	if( federate.getFederateObjectHandle() != null &&
+		//	    federate.getFederateObjectHandle().equals(objectHandle) )
+		//	{
+		//		peers.remove( federate.getFederateName() );
+		//		break;
+		//	}
+		//}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////

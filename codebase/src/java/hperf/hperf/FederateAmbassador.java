@@ -124,9 +124,12 @@ public class FederateAmbassador extends NullFederateAmbassador
 			// No-op
 		}
 		
-		logger.debug( "   discoverObjectInstance(): class="+theObjectClass+
-		              ", handle="+objectHandle+
-		              ", name="+objectName );
+		if( logger.isDebugEnabled() )
+		{
+			logger.debug( " (FedAmb) discoverObjectInstance(): class="+theObjectClass+
+			              ", handle="+objectHandle+
+			              ", name="+objectName );
+		}
 	}
 
 	public void reflectAttributeValues( ObjectInstanceHandle theObject,
@@ -162,6 +165,12 @@ public class FederateAmbassador extends NullFederateAmbassador
 
 			storage.recordReflect( theObject );
 		}
+
+		if( logger.isDebugEnabled() )
+		{
+			logger.debug( " (FedAmb) reflectAttributeValues(): object="+theObject+
+			              ", attributes="+theAttributes.size() );
+		}
 	}
 
 	public void removeObjectInstance( ObjectInstanceHandle objectHandle,
@@ -171,6 +180,9 @@ public class FederateAmbassador extends NullFederateAmbassador
 		throws FederateInternalError
 	{
 		storage.recordDelete( objectHandle );
+
+		if( logger.isDebugEnabled() )
+			logger.debug( " (FedAmb) removeObjectInstance(): object="+objectHandle );
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////
@@ -190,6 +202,12 @@ public class FederateAmbassador extends NullFederateAmbassador
 			handlePingAck( parameters );
 		else if( interactionClass.equals(IC_THROUGHPUT) )
 			handleThroughputInteraction( interactionClass, parameters );
+		
+		if( logger.isDebugEnabled() )
+		{
+			logger.debug( " (FedAmb) receiveInteraction(): handle="+interactionClass+
+			              ", parameters="+parameters.size() );
+		}
 	}
 
 	///

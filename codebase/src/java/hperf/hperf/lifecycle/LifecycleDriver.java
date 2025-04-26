@@ -139,6 +139,9 @@ public class LifecycleDriver implements IDriver
 
 	private void doSetup() throws RTIexception
 	{
+		// 0. pre-initialization
+		storage.clearPeers();
+		
 		// 1. create and join
 		createAndJoinFederation();
 
