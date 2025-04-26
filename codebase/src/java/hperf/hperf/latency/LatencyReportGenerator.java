@@ -246,7 +246,8 @@ public class LatencyReportGenerator
 			if( microseconds > 9999 )
 				return String.format( "%4dms", milliseconds );
 			else
-				return String.format( "%4dμs", microseconds );
+				return String.format( "%4dus", microseconds );
+				//return String.format( "%4dμs", microseconds ); -- Windows having trouble :(
 		}
 
 		public String getFormattedString( double value )
@@ -255,7 +256,8 @@ public class LatencyReportGenerator
 			if( microseconds > 9999 )
 				return String.format( "%7.2fms", value/(1000*1000) );
 			else
-				return String.format( "%7.2fμs", value/1000 );
+				return String.format( "%7.2fus", value/1000 );
+				//return String.format( "%7.2fμs", value/1000 ); -- Windows having trouble :(
 		}
 
 	}
