@@ -1,2 +1,2 @@
 #!/bin/bash
-java -jar lib/portico/2.1.0/portico.jar wanrouter $*
+java -jar lib/portico/portico.jar wanrouter $*
