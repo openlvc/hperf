@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objectModel xmlns="http://standards.ieee.org/IEEE1516-2010" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.ieee.org/IEEE1516-2010 http://standards.ieee.org/downloads/1516/1516.2-2010/IEEE1516-DIF-2010.xsd">
+	<modelIdentification>
+		<name>HPerf Test FOM</name>
+		<type>FOM</type>
+		<version>1.0</version>
+		<modificationDate>2025-04-28</modificationDate>
+		<securityClassification>Unclassified</securityClassification>
+		<purpose>Basic structure to support controlled performance testing.</purpose>
+		<applicationDomain>Benchmarking</applicationDomain>
+		<description>Basic structure to support controlled performance testing.</description>
+		<poc>
+			<pocType>Developer</pocType>
+			<pocName>OpenLVC</pocName>
+			<pocOrg>The OpenLVC Group</pocOrg>
+			<pocTelephone>NA</pocTelephone>
+			<pocEmail>NA</pocEmail>
+		</poc>
+	</modelIdentification>
+	<objects>
+		<objectClass>
+			<name>HLAobjectRoot</name>
+			<sharing>Neither</sharing>
+			<attribute>
+				<name>HLAprivilegeToDeleteObject</name>
+				<dataType>HLAtoken</dataType>
+				<updateType>Static</updateType>
+				<updateCondition>NA</updateCondition>
+				<ownership>DivestAcquire</ownership>
+				<sharing>PublishSubscribe</sharing>
+				<transportation>HLAreliable</transportation>
+				<order>TimeStamp</order>
+			</attribute>
+			<!-- class: TestFederate -->
+			<objectClass>
+				<name>TestFederate</name>
+				<sharing>PublishSubscribe</sharing>
+				<attribute>
+					<name>federateName</name>
+					<dataType>HLAASCIIstring</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On change</updateCondition>
+					<ownership>DivestAcquire</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAbestEffort</transportation>
+					<order>Receive</order>
+					<semantics>Name of a test participant.</semantics>
+				</attribute>
+			</objectClass>
+			<!-- class: TestObject -->
+			<objectClass>
+				<name>TestObject</name>
+				<sharing>PublishSubscribe</sharing>
+				<attribute>
+					<name>creator</name>
+					<dataType>HLAASCIIstring</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On change</updateCondition>
+					<ownership>DivestAcquire</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAbestEffort</transportation>
+					<order>Receive</order>
+					<semantics>Name of a test participant that created the object.</semantics>
+				</attribute>
+				<attribute>
+					<name>payload</name>
+					<dataType>HLAopaqueData</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On change</updateCondition>
+					<ownership>DivestAcquire</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAbestEffort</transportation>
+					<order>Receive</order>
+					<semantics>Arbitrary data to bulk up packet.</semantics>
+				</attribute>
+			</objectClass>
+		</objectClass>
+	</objects>
+	<interactions>
+		<interactionClass>
+			<name>HLAinteractionRoot</name>
+			<sharing>Neither</sharing>
+			<transportation>HLAbestEffort</transportation>
+			<order>Receive</order>
+			<semantics></semantics>
+			<!-- class: ThroughputInteraction -->
+			<interactionClass>
+				<name>ThroughputInteraction</name>
+				<sharing>Neither</sharing>
+				<transportation>HLAbestEffort</transportation>
+				<order>Receive</order>
+				<parameter>
+					<name>sender</name>
+					<dataType>HLAASCIIstring</dataType>
+					<semantics>Name of the sending federate.</semantics>
+				</parameter>
+				<parameter>
+					<name>payload</name>
+					<dataType>HLAopaqueData</dataType>
+					<semantics>Arbitrary data to bulk up packet.</semantics>
+				</parameter>
+			</interactionClass>
+			<!-- class: Ping -->
+			<interactionClass>
+				<name>Ping</name>
+				<sharing>Neither</sharing>
+				<transportation>HLAbestEffort</transportation>
+				<order>Receive</order>
+				<parameter>
+					<name>serial</name>
+					<dataType>HLAinteger32BE</dataType>
+					<semantics>ID for the ping.</semantics>
+				</parameter>
+				<parameter>
+					<name>sender</name>
+					<dataType>HLAASCIIstring</dataType>
+					<semantics>Name of the sending federate.</semantics>
+				</parameter>
+				<parameter>
+					<name>payload</name>
+					<dataType>HLAopaqueData</dataType>
+					<semantics>Arbitrary data to bulk up packet.</semantics>
+				</parameter>
+			</interactionClass>
+			<!-- class: PingAck -->
+			<interactionClass>
+				<name>PingAck</name>
+				<sharing>Neither</sharing>
+				<transportation>HLAbestEffort</transportation>
+				<order>Receive</order>
+				<parameter>
+					<name>serial</name>
+					<dataType>HLAinteger32BE</dataType>
+					<semantics>ID for the ping we are acknowledging.</semantics>
+				</parameter>
+				<parameter>
+					<name>sender</name>
+					<dataType>HLAASCIIstring</dataType>
+					<semantics>Name of the sending federate.</semantics>
+				</parameter>
+				<parameter>
+					<name>payload</name>
+					<dataType>HLAopaqueData</dataType>
+					<semantics>Arbitrary data to bulk up packet.</semantics>
+				</parameter>
+			</interactionClass>
+		</interactionClass>
+	</interactions>
+</objectModel>

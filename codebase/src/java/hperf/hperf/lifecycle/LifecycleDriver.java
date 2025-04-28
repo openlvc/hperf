@@ -179,7 +179,7 @@ public class LifecycleDriver implements IDriver
 		try
 		{
 			URL[] modules = new URL[]{
-			    (new File("config/testfom.fed")).toURI().toURL()
+			    (new File("config/testfom.xml")).toURI().toURL()
 			};
 			
 			rtiamb.createFederationExecution( configuration.getFederationName(), modules );
