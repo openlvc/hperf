@@ -51,11 +51,6 @@ fi
 ############################################
 echo -e "Starting HPerf Test Federate (use --help to display usage)"
 
-############################################
-### (target) execute #######################
-############################################
-echo -e "Starting HPerf Test Federate (use --help to display usage)"
-
 # Change : to ; on classpath if Git Bash... because Windows
 classpath="./lib/hperf.jar:./lib/portico/portico.jar"
 if [ $(uname) != "Linux" ]; then
