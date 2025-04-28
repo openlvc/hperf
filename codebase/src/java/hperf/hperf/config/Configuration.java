@@ -454,7 +454,11 @@ public class Configuration
 			if( argument.startsWith("--peers") )
 			{
 				validateArgIsValue( argument, args[count+1] );
-				StringTokenizer tokenizer = new StringTokenizer( args[count+1], "," );
+				String value = args[count+1];
+				StringTokenizer tokenizer = new StringTokenizer( value, ":" );
+				if( value.contains(",") )
+					tokenizer = new StringTokenizer( value, "," );
+
 				while( tokenizer.hasMoreTokens() )
 					peers.add( tokenizer.nextToken() );
 				

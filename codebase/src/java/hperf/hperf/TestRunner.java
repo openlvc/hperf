@@ -320,6 +320,19 @@ public class TestRunner
 	private void registerFederateObject() throws RTIexception
 	{
 		logger.info( "Registering HLAobjectRoot.TestFederate object for local federate" );
+
+		// reserve the name first
+		rtiamb.reserveObjectInstanceName( configuration.getFederateName() );
+		logger.info( "Waiting for object name reservation ("+configuration.getFederateName()+")" );
+		while( fedamb.reservedObjectNames.contains(configuration.getFederateName()) == false )
+		{
+			if( configuration.isImmediateCallback() )
+				Utils.sleep( 500 );
+			else
+				rtiamb.evokeMultipleCallbacks( 1.0, 1.0 );
+		}
+
+		// register the obejct
 		rtiamb.registerObjectInstance( OC_TEST_FEDERATE, configuration.getFederateName() );
 	}
 	

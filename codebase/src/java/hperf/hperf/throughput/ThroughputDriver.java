@@ -312,8 +312,7 @@ public class ThroughputDriver implements IDriver
 		for( int i = 0; i < configuration.getObjectCount(); i++ )
 		{
 			String objectName = configuration.getFederateName()+"-"+(i+1);
-			ObjectInstanceHandle oHandle = rtiamb.registerObjectInstance( OC_TEST_OBJECT,
-			                                                              objectName );
+			ObjectInstanceHandle oHandle = rtiamb.registerObjectInstance( OC_TEST_OBJECT );
 
 			// store our details about the object for later reference
 			myObjects.add( oHandle );

@@ -56,6 +56,9 @@ public class FederateAmbassador extends NullFederateAmbassador
 	private Storage storage;
 	private Configuration configuration;
 
+	// federate name reservation
+	public Set<String> reservedObjectNames;
+
 	// sync point information
 	public Set<String> announcedSyncPoints;
 	public Set<String> achievedSyncPoints;
@@ -79,6 +82,9 @@ public class FederateAmbassador extends NullFederateAmbassador
 		this.logger = Logger.getLogger( "hp" );
 		this.configuration = configuration;
 		this.storage = storage;
+
+		// object names
+		this.reservedObjectNames = new HashSet<String>();
 
 		// sync points
 		this.announcedSyncPoints = new HashSet<String>();
@@ -146,7 +152,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 			//
 			// Initial Update
 			//
-			String name = new String( theAttributes.getValueReference(AC_CREATOR).array() );
+			String name = new String( theAttributes.get(AC_CREATOR) );
 			TestFederate owner = storage.getPeer( name );
 			if( owner == null )
 				logger.error( "Received initial update from an undiscovered federate: "+name );
@@ -159,7 +165,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 			// Regular Reflect
 			//
 			// validate the data blob received
-			byte[] payload = theAttributes.getValueReference(AC_PAYLOAD).array();
+			byte[] payload = theAttributes.get(AC_PAYLOAD);
 			if( configuration.getValidateData() )
 				Utils.verifyPayload( payload, configuration.getPacketSize(), logger );
 
@@ -217,12 +223,12 @@ public class FederateAmbassador extends NullFederateAmbassador
 	                                          ParameterHandleValueMap parameters )
 	{
 		// validate the data blob received
-		byte[] payload = parameters.getValueReference(PC_THROUGHPUT_PAYLOAD).array();
+		byte[] payload = parameters.get(PC_THROUGHPUT_PAYLOAD);
 		if( configuration.getValidateData() )
 			Utils.verifyPayload( payload, configuration.getPacketSize(), logger );
 
 		// find the sending federate in our list
-		byte[] temp = parameters.getValueReference(PC_THROUGHPUT_SENDER).array();
+		byte[] temp = parameters.get(PC_THROUGHPUT_SENDER);
 		String senderName = new String( temp );
 		TestFederate sender = storage.getPeer( senderName );
 
@@ -240,13 +246,13 @@ public class FederateAmbassador extends NullFederateAmbassador
 	private void handlePing( ParameterHandleValueMap parameters )
 	{
 		// get the serial out
-		int serial = Utils.bytesToInt( parameters.getValueReference(PC_PING_SERIAL).array() );
+		int serial = Utils.bytesToInt( parameters.get(PC_PING_SERIAL) );
 
 		// validate the payload data if we've been asked to
 		if( configuration.getValidateData() )
 		{
 			// validate the data only if we're told to - will hurt latency!
-			Utils.verifyPayload( parameters.getValueReference(PC_PING_PAYLOAD).array(),
+			Utils.verifyPayload( parameters.get(PC_PING_PAYLOAD),
 			                     configuration.getPacketSize(),
 			                     logger );
 		}
@@ -272,7 +278,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 			return;
 
 		// find the TestFederate for the sender & record the timestamp
-		String sender = new String( parameters.getValueReference(PC_PING_ACK_SENDER).array() );
+		String sender = new String( parameters.get(PC_PING_ACK_SENDER) );
 		TestFederate federate = storage.getPeer( sender );
 		this.currentLatencyEvent.addResponse( federate, receivedTimestamp );
 
@@ -280,7 +286,7 @@ public class FederateAmbassador extends NullFederateAmbassador
 		if( configuration.getValidateData() )
 		{
 			// validate the data only if we're told to - will hurt latency!
-			Utils.verifyPayload( parameters.getValueReference(PC_PING_ACK_PAYLOAD).array(),
+			Utils.verifyPayload( parameters.get(PC_PING_ACK_PAYLOAD),
 			                     configuration.getPacketSize(),
 			                     logger );
 		}
@@ -329,6 +335,43 @@ public class FederateAmbassador extends NullFederateAmbassador
 		throws FederateInternalError
 	{
 		this.achievedSyncPoints.add( label );
+	}
+
+
+
+	///////////////////////////////////////////////////////////////////////////////////////
+	////////////////////// Object Instance Name Reservation Handling //////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////
+	public void objectInstanceNameReservationSucceeded( String objectName )
+		throws FederateInternalError
+	{
+		if( logger.isDebugEnabled() )
+			logger.debug( "(FedAmb) Object name reservation success: "+objectName );
+
+		this.reservedObjectNames.add( objectName );
+	}
+
+	public void objectInstanceNameReservationFailed( String objectName )
+		throws FederateInternalError
+	{
+		logger.warn( "(FedAmb) Object name reservation FAILED: "+objectName );
+		this.reservedObjectNames.add( objectName );
+	}
+
+	public void multipleObjectInstanceNameReservationSucceeded( Set<String> objectNames )
+		throws FederateInternalError
+	{
+		if( logger.isDebugEnabled() )
+			logger.debug( "(FedAmb) Object name reservation success: "+objectNames );
+
+		this.reservedObjectNames.addAll( objectNames );
+	}
+
+	public void multipleObjectInstanceNameReservationFailed( Set<String> objectNames )
+		throws FederateInternalError
+	{
+		logger.warn( "(FedAmb) Object name reservation FAILED: "+objectNames );
+		this.reservedObjectNames.addAll( objectNames );
 	}
 
 	//----------------------------------------------------------

@@ -42,7 +42,7 @@
 					<updateCondition>On change</updateCondition>
 					<ownership>DivestAcquire</ownership>
 					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAbestEffort</transportation>
+					<transportation>HLAreliable</transportation>
 					<order>Receive</order>
 					<semantics>Name of a test participant.</semantics>
 				</attribute>
@@ -58,7 +58,7 @@
 					<updateCondition>On change</updateCondition>
 					<ownership>DivestAcquire</ownership>
 					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAbestEffort</transportation>
+					<transportation>HLAreliable</transportation>
 					<order>Receive</order>
 					<semantics>Name of a test participant that created the object.</semantics>
 				</attribute>
@@ -69,7 +69,7 @@
 					<updateCondition>On change</updateCondition>
 					<ownership>DivestAcquire</ownership>
 					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAbestEffort</transportation>
+					<transportation>HLAreliable</transportation>
 					<order>Receive</order>
 					<semantics>Arbitrary data to bulk up packet.</semantics>
 				</attribute>
@@ -80,14 +80,14 @@
 		<interactionClass>
 			<name>HLAinteractionRoot</name>
 			<sharing>Neither</sharing>
-			<transportation>HLAbestEffort</transportation>
-			<order>Receive</order>
+			<transportation>HLAreliable</transportation>
+			<order>TimeStamp</order>
 			<semantics></semantics>
 			<!-- class: ThroughputInteraction -->
 			<interactionClass>
 				<name>ThroughputInteraction</name>
 				<sharing>Neither</sharing>
-				<transportation>HLAbestEffort</transportation>
+				<transportation>HLAreliable</transportation>
 				<order>Receive</order>
 				<parameter>
 					<name>sender</name>
@@ -104,7 +104,7 @@
 			<interactionClass>
 				<name>Ping</name>
 				<sharing>Neither</sharing>
-				<transportation>HLAbestEffort</transportation>
+				<transportation>HLAreliable</transportation>
 				<order>Receive</order>
 				<parameter>
 					<name>serial</name>
@@ -126,7 +126,7 @@
 			<interactionClass>
 				<name>PingAck</name>
 				<sharing>Neither</sharing>
-				<transportation>HLAbestEffort</transportation>
+				<transportation>HLAreliable</transportation>
 				<order>Receive</order>
 				<parameter>
 					<name>serial</name>
@@ -146,4 +146,17 @@
 			</interactionClass>
 		</interactionClass>
 	</interactions>
+	<switches>
+		<autoProvide isEnabled="false"/>
+		<conveyRegionDesignatorSets isEnabled="false"/>
+		<conveyProducingFederate isEnabled="false"/>
+		<attributeScopeAdvisory isEnabled="false"/>
+		<attributeRelevanceAdvisory isEnabled="false"/>
+		<objectClassRelevanceAdvisory isEnabled="false"/>
+		<interactionRelevanceAdvisory isEnabled="false"/>
+		<serviceReporting isEnabled="false"/>
+		<exceptionReporting isEnabled="false"/>
+		<delaySubscriptionEvaluation isEnabled="false"/>
+		<automaticResignAction resignAction="CancelThenDeleteThenDivest"/>
+	</switches>
 </objectModel>
