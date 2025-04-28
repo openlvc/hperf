@@ -22,7 +22,6 @@ rem ########################################
 rem ### (target) run #######################
 rem ########################################
 :run
-SHIFT
 java -cp ".\lib\hperf.jar;.\lib\portico\portico.jar" hperf.Main --throughput-test %1 %2 %3 %4 %5 %6 %7 %8 %9
 goto finish
 
